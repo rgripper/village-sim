@@ -59,7 +59,7 @@ pub struct LandGrid {
 
 //     commands
 //         .spawn_bundle(SpriteBundle {
-//             material: materials.add(textures.texture_bevy.clone().into()),
+//             material: materials.add(textures.texture_.clone().into()),
 //             transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
 //             ..Default::default()
 //         })

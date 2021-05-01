@@ -4,7 +4,6 @@ mod hexagon;
 mod land_grid;
 mod loading;
 mod menu;
-mod player;
 mod tree;
 mod world_gen;
 
@@ -12,7 +11,6 @@ use crate::actions::ActionsPlugin;
 use crate::audio::InternalAudioPlugin;
 use crate::loading::LoadingPlugin;
 use crate::menu::MenuPlugin;
-use crate::player::PlayerPlugin;
 
 use bevy::app::AppBuilder;
 // use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
@@ -35,7 +33,6 @@ impl Plugin for GamePlugin {
             .add_plugin(ActionsPlugin)
             .add_plugin(MenuPlugin)
             .add_plugin(InternalAudioPlugin)
-            .add_plugin(PlayerPlugin)
             .add_plugin(WorldGenPlugin)
             // .add_plugin(FrameTimeDiagnosticsPlugin::default())
             // .add_plugin(LogDiagnosticsPlugin::default())

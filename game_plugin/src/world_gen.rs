@@ -45,11 +45,14 @@ fn generate_world(
         )
     };
 
+    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+
     for (x, y) in (0..36).map(|_| generate_tree(&mut rng, &world_rect)) {
         commands
             .spawn_bundle(SpriteBundle {
                 material: materials.add(textures.texture_tree.clone().into()),
                 transform: Transform::from_translation(Vec3::new(x, y, 1.)),
+                sprite: Sprite::new(Vec2::new(12., 24.)),
                 ..Default::default()
             })
             .insert(Tree);
@@ -77,7 +80,7 @@ fn create_land_grid(
 
     commands
         .spawn_bundle(SpriteBundle {
-            material: materials.add(textures.texture_bevy.clone().into()),
+            material: materials.add(Color::rgb(0.4, 0.8, 0.2).into()),
             transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
             ..Default::default()
         })
