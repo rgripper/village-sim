@@ -11,10 +11,6 @@ pub struct LandTile {
     pub row: i32,
 }
 
-pub struct LandGrid {
-    pub tiles: Vec<LandTile>,
-}
-
 // impl Plugin for LandGridPlugin {
 //     fn build(&self, app: &mut AppBuilder) {
 //         app.add_system_set(

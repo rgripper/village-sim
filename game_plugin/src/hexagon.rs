@@ -1,16 +1,31 @@
+use bevy::math::Vec2;
+
 pub struct Rectangle {
-    pub x: f32,
-    pub y: f32,
-    pub width: f32,
-    pub height: f32,
+    pub position: Vec2,
+    pub size: Vec2,
+}
+
+pub struct Hexagon {
+    pub vertices: Vec<Vec2>,
+}
+
+impl Hexagon {
+    pub fn get_bounding_rectangle(&self) -> Rectangle {
+        Rectangle {
+            position: Vec2::new(self.vertices[0].x, self.vertices[1].y),
+            size: Vec2::new(
+                self.vertices[3].x - self.vertices[0].x,
+                self.vertices[4].y - self.vertices[2].y,
+            ),
+        }
+    }
 }
 
 pub struct HexagonBuilder {
     size: f32,
-    width: f32,
     height: f32,
     pointy_offset: f32,
-    hexagon_shape: Vec<(f32, f32)>,
+    hexagon_shape: Vec<Vec2>,
 }
 
 fn is_even(value: i32) -> bool {
@@ -18,20 +33,23 @@ fn is_even(value: i32) -> bool {
 }
 
 impl HexagonBuilder {
-    pub fn get_hexagon_at(&self, column: i32, row: i32) -> Vec<(f32, f32)> {
-        let (pos_x, pos_y) = self.get_position(column, row);
-        self.hexagon_shape
-            .iter()
-            .map(|(x, y)| (x + pos_x, y + pos_y))
-            .collect()
+    pub fn get_hexagon_at(&self, origin: Vec2, column: i32, row: i32) -> Hexagon {
+        let pos = self.get_top_left(column, row) + origin;
+        Hexagon {
+            vertices: self
+                .hexagon_shape
+                .iter()
+                .map(|vertex| pos + *vertex)
+                .collect(),
+        }
     }
 
     pub fn get_world_rect(&self, column_count: i32, row_count: i32) -> Rectangle {
+        let width = (3.0 * self.size * column_count as f32 + 0.5 * self.size).ceil();
+        let height = ((self.height * row_count as f32 + self.height) / 2.0).ceil();
         Rectangle {
-            x: 0.0,
-            y: 0.0,
-            width: (3.0 * self.size * column_count as f32 + 0.5 * self.size).ceil(),
-            height: ((self.height * row_count as f32 + self.height) / 2.0).ceil(),
+            position: Vec2::new(-width / 2.0, -height / 2.0),
+            size: Vec2::new(width, height),
         }
     }
 
@@ -39,25 +57,34 @@ impl HexagonBuilder {
         let width = 2.0 * size;
         let height = 3.0f32.sqrt() * size;
 
+        let center = Vec2::new(width / 2.0, height / 2.0);
+
         Self {
             size,
-            width,
             height,
             pointy_offset: size * 1.5,
             hexagon_shape: vec![
-                (width, height / 2.0),
-                (width * 3.0 / 4.0, height),
-                (width / 4.0, height),
-                (0.0, height / 2.0),
-                (width / 4.0, 0.0),
-                (width * 3.0 / 4.0, 0.0),
-            ],
+                Vec2::new(width, height / 2.0),
+                Vec2::new(width * 3.0 / 4.0, height),
+                Vec2::new(width / 4.0, height),
+                Vec2::new(0.0, height / 2.0),
+                Vec2::new(width / 4.0, 0.0),
+                Vec2::new(width * 3.0 / 4.0, 0.0),
+            ]
+            .iter()
+            .map(|vertex| *vertex - center)
+            .collect(),
         }
     }
 
-    fn get_position(&self, column: i32, row: i32) -> (f32, f32) {
-        (
-            column as f32 * self.size * 3.0 + (if is_even(row) { self.size * 1.5 } else { 0.0 }),
+    fn get_top_left(&self, column: i32, row: i32) -> Vec2 {
+        Vec2::new(
+            column as f32 * self.size * 3.0
+                + (if is_even(row) {
+                    self.pointy_offset
+                } else {
+                    0.0
+                }),
             row as f32 * (self.height / 2.0),
         )
     }

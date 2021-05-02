@@ -1,6 +1,6 @@
+use crate::loading::TextureAssets;
 use crate::{hexagon::HexagonBuilder, tree::Tree};
 use crate::{hexagon::Rectangle, land_grid::LandTile, GameState};
-use crate::{land_grid::LandGrid, loading::TextureAssets};
 use bevy::prelude::*;
 use rand::{prelude::ThreadRng, Rng};
 
@@ -33,6 +33,8 @@ fn generate_world(
         &mut commands,
         &textures,
         &mut materials,
+        &hexagon_builder,
+        &world_rect,
         world_columns,
         world_rows,
     );
@@ -40,8 +42,8 @@ fn generate_world(
     let mut rng = rand::thread_rng();
     let generate_tree = |rng: &mut ThreadRng, world_rect: &Rectangle| {
         (
-            rng.gen_range(0f32..world_rect.width),
-            rng.gen_range(0f32..world_rect.height),
+            rng.gen_range(world_rect.position.x..world_rect.position.x.abs()),
+            rng.gen_range(world_rect.position.y..world_rect.position.y.abs()),
         )
     };
 
@@ -63,28 +65,29 @@ fn create_land_grid(
     commands: &mut Commands,
     textures: &Res<TextureAssets>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
+    hexagon_builder: &HexagonBuilder,
+    world_rect: &Rectangle,
     world_columns: i32,
     world_rows: i32,
 ) {
-    let land_grid = LandGrid {
-        tiles: (0..world_columns * world_rows)
-            .map(|i| {
-                LandTile {
-                    column: i.rem_euclid(world_columns),
-                    row: i / world_columns,
-                }
-                // hexagon_builder.get_hexagon_at(i.rem_euclid(world_columns), i / world_columns)
-            })
-            .collect(),
-    };
-
-    commands
-        .spawn_bundle(SpriteBundle {
-            material: materials.add(Color::rgb(0.4, 0.8, 0.2).into()),
-            transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
-            ..Default::default()
+    (0..world_columns * world_rows)
+        .map(|i| LandTile {
+            column: i.rem_euclid(world_columns),
+            row: i / world_columns,
         })
-        .insert(land_grid);
+        .for_each(|tile| {
+            let hexagon =
+                hexagon_builder.get_hexagon_at(world_rect.position, tile.column, tile.row);
+            let rect = hexagon.get_bounding_rectangle();
+            commands
+                .spawn_bundle(SpriteBundle {
+                    material: materials.add(Color::rgb(0.5, 0.78, 0.52).into()),
+                    transform: Transform::from_translation(rect.position.extend(1.)),
+                    sprite: Sprite::new(rect.size),
+                    ..Default::default()
+                })
+                .insert(tile);
+        })
 }
 
 // fn remove_land_grid(mut commands: Commands, land_grid_query: Query<Entity, With<LandGrid>>) {
