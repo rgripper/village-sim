@@ -5,6 +5,7 @@ mod land_grid;
 mod loading;
 mod menu;
 mod tree;
+mod creature;
 mod world_gen;
 
 use crate::actions::ActionsPlugin;

@@ -1,4 +1,4 @@
-use crate::loading::TextureAssets;
+use crate::{creature::Creature, loading::TextureAssets};
 use crate::{hexagon::HexagonBuilder, tree::Tree};
 use crate::{hexagon::Rectangle, land_grid::LandTile, GameState};
 use bevy::prelude::*;
@@ -20,6 +20,7 @@ impl Plugin for WorldGenPlugin {
 fn generate_world(
     mut commands: Commands,
     textures: Res<TextureAssets>,
+    asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let hexagon_size = 30.0;
@@ -40,24 +41,43 @@ fn generate_world(
     );
 
     let mut rng = rand::thread_rng();
-    let generate_tree = |rng: &mut ThreadRng, world_rect: &Rectangle| {
+    let generate_in_rect = |rng: &mut ThreadRng, rect: &Rectangle| {
         (
-            rng.gen_range(world_rect.position.x..world_rect.position.x.abs()),
-            rng.gen_range(world_rect.position.y..world_rect.position.y.abs()),
+            rng.gen_range(rect.position.x - rect.size.x / 2.0..rect.position.x + rect.size.x / 2.0),
+            rng.gen_range(rect.position.y - rect.size.y / 2.0..rect.position.y + rect.size.y / 2.0),
         )
     };
 
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 
-    for (x, y) in (0..36).map(|_| generate_tree(&mut rng, &world_rect)) {
+    let tree_material = materials.add(textures.texture_tree.clone().into());
+    let man_material = materials.add(textures.texture_man.clone().into());
+
+    for (x, y) in (0..36).map(|_| generate_in_rect(&mut rng, &world_rect)) {
         commands
             .spawn_bundle(SpriteBundle {
-                material: materials.add(textures.texture_tree.clone().into()),
+                material: tree_material.clone(),
                 transform: Transform::from_translation(Vec3::new(x, y, 1.)),
                 sprite: Sprite::new(Vec2::new(12., 24.)),
                 ..Default::default()
             })
             .insert(Tree);
+    }
+
+    let start_pos = Vec2::new(20., 40.);
+    let villager_start_rect = Rectangle {
+        position: start_pos,
+        size: Vec2::new(100., 100.),
+    };
+    for (x, y) in (0..8).map(|_| generate_in_rect(&mut rng, &villager_start_rect)) {
+        commands
+            .spawn_bundle(SpriteBundle {
+                material: man_material.clone(),
+                transform: Transform::from_translation(Vec3::new(x, y, 1.)),
+                sprite: Sprite::new(Vec2::new(16., 16.)),
+                ..Default::default()
+            })
+            .insert(Creature);
     }
 }
 
@@ -70,19 +90,20 @@ fn create_land_grid(
     world_columns: i32,
     world_rows: i32,
 ) {
+    let origin = world_rect.size / 2.0;
+    let tile_material = materials.add(Color::rgb(0.5, 0.78, 0.52).into());
     (0..world_columns * world_rows)
         .map(|i| LandTile {
             column: i.rem_euclid(world_columns),
             row: i / world_columns,
         })
         .for_each(|tile| {
-            let hexagon =
-                hexagon_builder.get_hexagon_at(world_rect.position, tile.column, tile.row);
+            let hexagon = hexagon_builder.get_hexagon_at(origin, tile.column, tile.row);
             let rect = hexagon.get_bounding_rectangle();
             commands
                 .spawn_bundle(SpriteBundle {
-                    material: materials.add(Color::rgb(0.5, 0.78, 0.52).into()),
-                    transform: Transform::from_translation(rect.position.extend(1.)),
+                    material: tile_material.clone(),
+                    transform: Transform::from_translation((rect.position).extend(1.)),
                     sprite: Sprite::new(rect.size),
                     ..Default::default()
                 })

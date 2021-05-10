@@ -34,7 +34,7 @@ fn is_even(value: i32) -> bool {
 
 impl HexagonBuilder {
     pub fn get_hexagon_at(&self, origin: Vec2, column: i32, row: i32) -> Hexagon {
-        let pos = self.get_top_left(column, row) + origin;
+        let pos = self.get_top_left(column, row) - origin;
         Hexagon {
             vertices: self
                 .hexagon_shape
@@ -48,7 +48,7 @@ impl HexagonBuilder {
         let width = (3.0 * self.size * column_count as f32 + 0.5 * self.size).ceil();
         let height = ((self.height * row_count as f32 + self.height) / 2.0).ceil();
         Rectangle {
-            position: Vec2::new(-width / 2.0, -height / 2.0),
+            position: Vec2::new(0., 0.),
             size: Vec2::new(width, height),
         }
     }
