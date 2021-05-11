@@ -53,6 +53,12 @@ impl HexagonBuilder {
         }
     }
 
+    pub fn get_world_columns_rows(&self, width: f32, height: f32) -> (i32, i32) {
+        let column_count = (width / self.size - 0.5) / 3.0;
+        let row_count = 2.0 * height / self.height - 1.0;
+        (column_count.floor() as i32, row_count.floor() as i32)
+    }
+
     pub fn new(size: f32) -> Self {
         let width = 2.0 * size;
         let height = 3.0f32.sqrt() * size;

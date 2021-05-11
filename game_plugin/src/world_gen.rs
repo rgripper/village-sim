@@ -6,6 +6,11 @@ use rand::{prelude::ThreadRng, Rng};
 
 pub struct WorldGenPlugin;
 
+pub struct WorldParams {
+    start_pos: Vec2,
+    size: Vec2,
+}
+
 impl Plugin for WorldGenPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_system_set(
@@ -23,11 +28,16 @@ fn generate_world(
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
+    let world_params = WorldParams {
+        start_pos: Vec2::new(20., 40.),
+        size: Vec2::new(600.0, 600.0),
+    };
+
     let hexagon_size = 30.0;
-    let world_columns = 9;
-    let world_rows = 27;
 
     let hexagon_builder = HexagonBuilder::new(hexagon_size);
+    let (world_columns, world_rows) =
+        hexagon_builder.get_world_columns_rows(world_params.size.x, world_params.size.y);
     let world_rect = hexagon_builder.get_world_rect(world_columns, world_rows);
 
     create_land_grid(
@@ -64,9 +74,8 @@ fn generate_world(
             .insert(Tree);
     }
 
-    let start_pos = Vec2::new(20., 40.);
     let villager_start_rect = Rectangle {
-        position: start_pos,
+        position: world_params.start_pos,
         size: Vec2::new(100., 100.),
     };
     for (x, y) in (0..8).map(|_| generate_in_rect(&mut rng, &villager_start_rect)) {
