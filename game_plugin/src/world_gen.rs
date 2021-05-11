@@ -6,9 +6,9 @@ use rand::{prelude::ThreadRng, Rng};
 
 pub struct WorldGenPlugin;
 
-pub struct WorldParams {
-    start_pos: Vec2,
-    size: Vec2,
+pub struct SimParams {
+    pub start_pos: Vec2,
+    pub size: Vec2,
 }
 
 impl Plugin for WorldGenPlugin {
@@ -25,24 +25,18 @@ impl Plugin for WorldGenPlugin {
 fn generate_world(
     mut commands: Commands,
     textures: Res<TextureAssets>,
-    asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    sim_params: Res<SimParams>,
 ) {
-    let world_params = WorldParams {
-        start_pos: Vec2::new(20., 40.),
-        size: Vec2::new(600.0, 600.0),
-    };
-
-    let hexagon_size = 30.0;
+    let hexagon_size = 10.0; // probably will be a const
 
     let hexagon_builder = HexagonBuilder::new(hexagon_size);
     let (world_columns, world_rows) =
-        hexagon_builder.get_world_columns_rows(world_params.size.x, world_params.size.y);
+        hexagon_builder.get_world_columns_rows(sim_params.size.x, sim_params.size.y);
     let world_rect = hexagon_builder.get_world_rect(world_columns, world_rows);
 
     create_land_grid(
         &mut commands,
-        &textures,
         &mut materials,
         &hexagon_builder,
         &world_rect,
@@ -75,7 +69,7 @@ fn generate_world(
     }
 
     let villager_start_rect = Rectangle {
-        position: world_params.start_pos,
+        position: sim_params.start_pos,
         size: Vec2::new(100., 100.),
     };
     for (x, y) in (0..8).map(|_| generate_in_rect(&mut rng, &villager_start_rect)) {
@@ -92,7 +86,6 @@ fn generate_world(
 
 fn create_land_grid(
     commands: &mut Commands,
-    textures: &Res<TextureAssets>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
     hexagon_builder: &HexagonBuilder,
     world_rect: &Rectangle,

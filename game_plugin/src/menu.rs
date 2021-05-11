@@ -1,10 +1,15 @@
-use crate::GameState;
+use crate::{GameState, world_gen::SimParams};
 use bevy::prelude::*;
 
 pub struct MenuPlugin;
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut AppBuilder) {
+        // TODO: build a menu item to specify resources
+        app.insert_resource(SimParams {
+            start_pos: Vec2::new(20., 40.),
+            size: Vec2::new(600.0, 600.0),
+        });
         app.init_resource::<ButtonMaterials>()
             .add_system_set(SystemSet::on_enter(GameState::Menu).with_system(setup_menu.system()))
             .add_system_set(
