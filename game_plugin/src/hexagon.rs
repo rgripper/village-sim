@@ -1,5 +1,6 @@
 use bevy::math::Vec2;
 
+// TODO: World should not use this REctangle, and actually be calculated around hexagon grid
 pub struct Rectangle {
     pub position: Vec2,
     pub size: Vec2,
