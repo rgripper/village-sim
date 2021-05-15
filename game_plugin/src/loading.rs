@@ -6,6 +6,8 @@ use bevy::asset::LoadState;
 use bevy::prelude::*;
 use bevy_kira_audio::AudioSource;
 
+// TODO: refactor this file. This is error prone, you must remember to start loading the textures in one method and insert them in another (here)
+
 pub struct LoadingPlugin;
 
 impl Plugin for LoadingPlugin {
@@ -32,7 +34,8 @@ pub struct AudioAssets {
 }
 
 pub struct TextureAssets {
-    pub texture_bevy: Handle<Texture>,
+    pub texture_tree: Handle<Texture>,
+    pub texture_man: Handle<Texture>,
 }
 
 fn start_loading(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -43,7 +46,8 @@ fn start_loading(mut commands: Commands, asset_server: Res<AssetServer>) {
     audio.push(asset_server.load_untyped(PATHS.audio_flying));
 
     let mut textures: Vec<HandleUntyped> = vec![];
-    textures.push(asset_server.load_untyped(PATHS.texture_bevy));
+    textures.push(asset_server.load_untyped(PATHS.texture_tree));
+    textures.push(asset_server.load_untyped(PATHS.texture_man));
 
     commands.insert_resource(LoadingState {
         textures,
@@ -83,7 +87,8 @@ fn check_state(
     });
 
     commands.insert_resource(TextureAssets {
-        texture_bevy: asset_server.get_handle(PATHS.texture_bevy),
+        texture_man: asset_server.get_handle(PATHS.texture_man),
+        texture_tree: asset_server.get_handle(PATHS.texture_tree),
     });
 
     state.set(GameState::Menu).unwrap();

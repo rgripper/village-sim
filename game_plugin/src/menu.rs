@@ -1,10 +1,23 @@
-use crate::GameState;
+use crate::{hexagon::HexagonBuilder, world_gen::SimParams, GameState};
 use bevy::prelude::*;
 
 pub struct MenuPlugin;
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut AppBuilder) {
+        // TODO: build a menu item to specify resources
+
+        let hexagon_size = 10.0; // will probably be a const
+        let hexagon_builder = HexagonBuilder::new(hexagon_size);
+        let size = Vec2::new(600.0, 600.0);
+        let (world_columns, world_rows) = hexagon_builder.get_world_columns_rows(size.x, size.y);
+
+        app.insert_resource(SimParams {
+            start_pos: Vec2::new(20., 40.),
+            world_rect: hexagon_builder.get_world_rect(world_columns, world_rows),
+            hexagon_builder,
+        });
+
         app.init_resource::<ButtonMaterials>()
             .add_system_set(SystemSet::on_enter(GameState::Menu).with_system(setup_menu.system()))
             .add_system_set(
