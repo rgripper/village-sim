@@ -4,7 +4,7 @@
 #[cfg(target_arch = "wasm32")]
 use bevy_webgl2;
 
-use bevy::prelude::{App, ClearColor, Color, WindowDescriptor};
+use bevy::prelude::{App, ClearColor, Color, Msaa, WindowDescriptor};
 use bevy::DefaultPlugins;
 use game_plugin::GamePlugin;
 
