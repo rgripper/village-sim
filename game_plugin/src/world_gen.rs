@@ -1,7 +1,6 @@
-use std::ops::Range;
-
 use crate::{
     creature::Creature,
+    layers::{OBJECT_LAYER, TILE_LAYER},
     loading::TextureAssets,
     plants::{PlantSize, Seeder},
 };
@@ -75,7 +74,10 @@ fn generate_world(
         commands
             .spawn_bundle(SpriteBundle {
                 material: man_material.clone(),
-                transform: Transform::from_translation(villager_pos.extend(villager_pos.y)),
+                transform: Transform::from_translation(villager_pos.extend(
+                    OBJECT_LAYER + sim_params.world_rect.size.y
+                        - villager_pos.y,
+                )),
                 sprite: Sprite::new(Vec2::new(16., 16.)),
                 ..Default::default()
             })
@@ -101,13 +103,15 @@ pub fn gen_tree(
         current: init_plant_size,
         max: 1.0,
     };
-    let transform = Transform::from_translation(tree_pos.extend(tree_pos.y));
+    let transform = Transform::from_translation(
+        tree_pos.extend(OBJECT_LAYER + world_rect.size.y - tree_pos.y),
+    );
     transform.translation;
     commands
         .spawn_bundle(SpriteBundle {
             material: tree_material.clone(),
             transform,
-            sprite: Sprite::new(Vec2::new(12., 48.)),
+            sprite: Sprite::new(Vec2::new(24., 96.)),
             ..Default::default()
         })
         .insert(Tree)
@@ -140,7 +144,7 @@ fn create_land_grid(
             commands
                 .spawn_bundle(SpriteBundle {
                     material: tile_material.clone(),
-                    transform: Transform::from_translation((rect.position).extend(-origin.y)),
+                    transform: Transform::from_translation((rect.position).extend(TILE_LAYER)),
                     sprite: Sprite::new(rect.size),
                     ..Default::default()
                 })

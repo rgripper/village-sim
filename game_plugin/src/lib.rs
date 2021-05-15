@@ -3,6 +3,7 @@ mod audio;
 mod creature;
 mod hexagon;
 mod land_grid;
+mod layers;
 mod loading;
 mod menu;
 mod plants;
