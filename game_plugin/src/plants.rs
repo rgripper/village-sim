@@ -33,7 +33,7 @@ use std::{convert::TryInto, ops::Range};
 
 use crate::{
     hexagon::Rectangle,
-    loading::TextureAssets,
+    loading::Materials,
     world_gen::{gen_in_rect, gen_tree, SimParams},
     GameState,
 };
@@ -57,12 +57,20 @@ fn grow(
     mut plant_size_query: Query<(&mut Transform, &mut Sprite, &mut PlantSize)>,
 ) {
     for (mut transform, mut sprite, mut plant_size) in plant_size_query.iter_mut() {
-        if plant_size.current < plant_size.max {
-            plant_size.current = plant_size
-                .max
-                .min(plant_size.current + 0.1 * time.delta_seconds());
-            transform.scale = get_scale_from_tree_size(&plant_size)
-        }
+        set_tree_size(&time, &mut transform, &mut plant_size);
+    }
+}
+
+pub fn set_tree_size(
+    time: &Res<Time>,
+    transform: &mut Mut<Transform>,
+    plant_size: &mut Mut<PlantSize>,
+) {
+    if plant_size.current < plant_size.max {
+        plant_size.current = plant_size
+            .max
+            .min(plant_size.current + 0.1 * time.delta_seconds());
+        transform.scale = get_scale_from_tree_size(&plant_size)
     }
 }
 
@@ -70,12 +78,10 @@ fn seed(
     time: Res<Time>,
     mut seeder_query: Query<(Entity, &Transform, &mut Seeder)>,
     mut commands: Commands,
-    textures: Res<TextureAssets>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    materials: Res<Materials>,
     sim_params: Res<SimParams>,
 ) {
     let rng = &mut rand::thread_rng();
-    let tree_material = materials.add(textures.texture_tree.clone().into()); // TODO: Store materials in resources
 
     for (entity, transform, mut seeder) in seeder_query.iter_mut() {
         let trees = seeder.produce(time.delta_seconds());
@@ -90,10 +96,11 @@ fn seed(
 
             gen_tree(
                 tree_pos,
-                0.5,
+                0.0,
                 &sim_params.world_rect,
                 &mut commands,
-                tree_material.clone(),
+                &materials.tree,
+                &materials.shadow,
             );
         }
     }

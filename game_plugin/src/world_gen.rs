@@ -1,8 +1,8 @@
 use crate::{
     creature::Creature,
-    layers::{OBJECT_LAYER, TILE_LAYER},
-    loading::TextureAssets,
-    plants::{PlantSize, Seeder},
+    layers::{OBJECT_LAYER, SHADOW_LAYER, TILE_LAYER},
+    loading::Materials,
+    plants::{get_scale_from_tree_size, PlantSize, Seeder},
 };
 use crate::{hexagon::HexagonBuilder, plants::Tree};
 use crate::{hexagon::Rectangle, land_grid::LandTile, GameState};
@@ -28,19 +28,14 @@ impl Plugin for WorldGenPlugin {
     }
 }
 
-fn generate_world(
-    mut commands: Commands,
-    textures: Res<TextureAssets>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    sim_params: Res<SimParams>,
-) {
+fn generate_world(mut commands: Commands, sim_params: Res<SimParams>, materials: Res<Materials>) {
     let (world_columns, world_rows) = sim_params
         .hexagon_builder
         .get_world_columns_rows(sim_params.world_rect.size.x, sim_params.world_rect.size.y);
 
     create_land_grid(
         &mut commands,
-        &mut materials,
+        &materials.tile,
         &sim_params.hexagon_builder,
         &sim_params.world_rect,
         world_columns,
@@ -51,9 +46,6 @@ fn generate_world(
 
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 
-    let tree_material = materials.add(textures.texture_tree.clone().into());
-    let man_material = materials.add(textures.texture_man.clone().into());
-
     for _ in 0..36 {
         let tree_pos = gen_in_rect(rng, &sim_params.world_rect);
         gen_tree(
@@ -61,7 +53,8 @@ fn generate_world(
             rng.gen_range(0.0..1.0),
             &sim_params.world_rect,
             &mut commands,
-            tree_material.clone(),
+            &materials.tree,
+            &materials.shadow,
         );
     }
 
@@ -71,18 +64,38 @@ fn generate_world(
     };
     for _ in 0..8 {
         let villager_pos = gen_in_rect(rng, &villager_start_rect);
-        commands
-            .spawn_bundle(SpriteBundle {
-                material: man_material.clone(),
-                transform: Transform::from_translation(villager_pos.extend(
-                    OBJECT_LAYER + sim_params.world_rect.size.y
-                        - villager_pos.y,
-                )),
+        gen_villager(&mut commands, &materials, &villager_pos, &sim_params);
+    }
+}
+
+fn gen_villager(
+    commands: &mut Commands,
+    materials: &Res<Materials>,
+    villager_pos: &Vec2,
+    sim_params: &Res<SimParams>,
+) {
+    commands
+        .spawn_bundle(SpriteBundle {
+            transform: Transform::from_translation(
+                villager_pos.extend(OBJECT_LAYER + sim_params.world_rect.size.y - villager_pos.y),
+            ),
+            ..Default::default()
+        })
+        .with_children(|parent| {
+            parent.spawn_bundle(SpriteBundle {
+                material: materials.man.clone(),
+                transform: Transform::from_translation(Vec2::new(0.0, 8.0).extend(OBJECT_LAYER)),
                 sprite: Sprite::new(Vec2::new(16., 16.)),
                 ..Default::default()
-            })
-            .insert(Creature);
-    }
+            });
+            parent.spawn_bundle(SpriteBundle {
+                transform: Transform::from_translation(Vec2::new(0.0, 0.0).extend(SHADOW_LAYER)),
+                sprite: Sprite::new(Vec2::new(16., 8.)),
+                material: materials.shadow.clone(),
+                ..Default::default()
+            });
+        })
+        .insert(Creature);
 }
 
 pub fn gen_in_rect(rng: &mut ThreadRng, rect: &Rectangle) -> Vec2 {
@@ -97,22 +110,36 @@ pub fn gen_tree(
     init_plant_size: f32,
     world_rect: &Rectangle,
     commands: &mut Commands,
-    tree_material: Handle<ColorMaterial>,
+    tree_material: &Handle<ColorMaterial>,
+    shadow_material: &Handle<ColorMaterial>,
 ) {
     let plant_size = PlantSize {
         current: init_plant_size,
         max: 1.0,
     };
-    let transform = Transform::from_translation(
-        tree_pos.extend(OBJECT_LAYER + world_rect.size.y - tree_pos.y),
-    );
-    transform.translation;
+    let mut transform =
+        Transform::from_translation(tree_pos.extend(OBJECT_LAYER + world_rect.size.y - tree_pos.y));
+    transform.scale = get_scale_from_tree_size(&plant_size);
+
     commands
         .spawn_bundle(SpriteBundle {
-            material: tree_material.clone(),
             transform,
-            sprite: Sprite::new(Vec2::new(24., 96.)),
             ..Default::default()
+        })
+        .with_children(|parent| {
+            parent.spawn_bundle(SpriteBundle {
+                material: tree_material.clone(),
+                transform: Transform::from_translation(Vec2::new(0.0, 0.0).extend(OBJECT_LAYER)),
+                sprite: Sprite::new(Vec2::new(24., 96.)),
+                ..Default::default()
+            });
+            // parent is a ChildBuilder, which has a similar API to Commands
+            parent.spawn_bundle(SpriteBundle {
+                transform: Transform::from_translation(Vec2::new(0.0, 0.0).extend(SHADOW_LAYER)),
+                sprite: Sprite::new(Vec2::new(48., 24.)),
+                material: shadow_material.clone(),
+                ..Default::default()
+            });
         })
         .insert(Tree)
         .insert(Seeder {
@@ -125,14 +152,14 @@ pub fn gen_tree(
 
 fn create_land_grid(
     commands: &mut Commands,
-    materials: &mut ResMut<Assets<ColorMaterial>>,
+    tile_material: &Handle<ColorMaterial>,
     hexagon_builder: &HexagonBuilder,
     world_rect: &Rectangle,
     world_columns: i32,
     world_rows: i32,
 ) {
     let origin = world_rect.size / 2.0;
-    let tile_material = materials.add(Color::rgb(0.5, 0.78, 0.52).into());
+
     (0..world_columns * world_rows)
         .map(|i| LandTile {
             column: i.rem_euclid(world_columns),
@@ -151,9 +178,3 @@ fn create_land_grid(
                 .insert(tile);
         })
 }
-
-// fn remove_land_grid(mut commands: Commands, land_grid_query: Query<Entity, With<LandGrid>>) {
-//     for land_grid in land_grid_query.iter() {
-//         commands.entity(land_grid).despawn();
-//     }
-// }

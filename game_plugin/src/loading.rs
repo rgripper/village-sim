@@ -33,9 +33,11 @@ pub struct AudioAssets {
     pub flying: Handle<AudioSource>,
 }
 
-pub struct TextureAssets {
-    pub texture_tree: Handle<Texture>,
-    pub texture_man: Handle<Texture>,
+pub struct Materials {
+    pub tile: Handle<ColorMaterial>,
+    pub tree: Handle<ColorMaterial>,
+    pub man: Handle<ColorMaterial>,
+    pub shadow: Handle<ColorMaterial>,
 }
 
 fn start_loading(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -48,6 +50,7 @@ fn start_loading(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut textures: Vec<HandleUntyped> = vec![];
     textures.push(asset_server.load_untyped(PATHS.texture_tree));
     textures.push(asset_server.load_untyped(PATHS.texture_man));
+    textures.push(asset_server.load_untyped(PATHS.texture_grad_shadow));
 
     commands.insert_resource(LoadingState {
         textures,
@@ -61,6 +64,7 @@ fn check_state(
     mut state: ResMut<State<GameState>>,
     asset_server: Res<AssetServer>,
     loading_state: Res<LoadingState>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     if LoadState::Loaded
         != asset_server.get_group_load_state(loading_state.fonts.iter().map(|handle| handle.id))
@@ -86,9 +90,16 @@ fn check_state(
         flying: asset_server.get_handle(PATHS.audio_flying),
     });
 
-    commands.insert_resource(TextureAssets {
-        texture_man: asset_server.get_handle(PATHS.texture_man),
-        texture_tree: asset_server.get_handle(PATHS.texture_tree),
+    commands.insert_resource(Materials {
+        tile: materials.add(Color::rgb(0.5, 0.78, 0.52).into()),
+        man: materials.add(asset_server.get_handle(PATHS.texture_man).clone().into()),
+        tree: materials.add(asset_server.get_handle(PATHS.texture_tree).clone().into()),
+        shadow: materials.add(
+            asset_server
+                .get_handle(PATHS.texture_grad_shadow)
+                .clone()
+                .into(),
+        ),
     });
 
     state.set(GameState::Menu).unwrap();
