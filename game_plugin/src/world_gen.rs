@@ -68,34 +68,57 @@ fn generate_world(mut commands: Commands, sim_params: Res<SimParams>, materials:
     }
 }
 
+fn spawn_sprite_bundles(
+    commands: &mut Commands,
+    bounding_box: Vec3,
+    main_material: Handle<ColorMaterial>,
+    shadow: Handle<ColorMaterial>,
+    world_size: Vec2,
+) {
+    // TODO: return here
+
+    commands
+        .spawn_bundle(SpriteBundle {
+            transform: Transform::from_translation(Vec3::new(
+                bounding_box.x,
+                bounding_box.y,
+                OBJECT_LAYER + world_size.y - bounding_box.z,
+            )),
+            ..Default::default()
+        })
+        .with_children(|parent| {
+            parent.spawn_bundle(SpriteBundle {
+                material: main_material.clone(),
+                transform: Transform::from_translation(
+                    Vec2::new(0.0, bounding_box.z / 2.0).extend(OBJECT_LAYER),
+                ),
+                sprite: Sprite::new(Vec2::new(bounding_box.x, bounding_box.y)),
+                ..Default::default()
+            });
+            parent.spawn_bundle(SpriteBundle {
+                transform: Transform::from_translation(Vec2::new(0.0, 0.0).extend(SHADOW_LAYER)),
+                sprite: Sprite::new(Vec2::new(bounding_box.x, bounding_box.y / 2.0)),
+                material: shadow.clone(),
+                ..Default::default()
+            });
+        })
+}
+
 fn gen_villager(
     commands: &mut Commands,
     materials: &Res<Materials>,
     villager_pos: &Vec2,
     sim_params: &Res<SimParams>,
 ) {
-    commands
-        .spawn_bundle(SpriteBundle {
-            transform: Transform::from_translation(
-                villager_pos.extend(OBJECT_LAYER + sim_params.world_rect.size.y - villager_pos.y),
-            ),
-            ..Default::default()
-        })
-        .with_children(|parent| {
-            parent.spawn_bundle(SpriteBundle {
-                material: materials.man.clone(),
-                transform: Transform::from_translation(Vec2::new(0.0, 8.0).extend(OBJECT_LAYER)),
-                sprite: Sprite::new(Vec2::new(16., 16.)),
-                ..Default::default()
-            });
-            parent.spawn_bundle(SpriteBundle {
-                transform: Transform::from_translation(Vec2::new(0.0, 0.0).extend(SHADOW_LAYER)),
-                sprite: Sprite::new(Vec2::new(16., 8.)),
-                material: materials.shadow.clone(),
-                ..Default::default()
-            });
-        })
-        .insert(Creature);
+    let bounding_box = Vec3::new(16.0, 16.0, 16.0);
+    spawn_sprite_bundles(
+        commands,
+        bounding_box,
+        materials.man.clone(),
+        materials.shadow.clone(),
+        sim_params.world_rect.size,
+    )
+    .insert(Creature);
 }
 
 pub fn gen_in_rect(rng: &mut ThreadRng, rect: &Rectangle) -> Vec2 {
