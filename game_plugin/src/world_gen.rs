@@ -6,7 +6,7 @@ use crate::{
 };
 use crate::{hexagon::HexagonBuilder, plants::Tree};
 use crate::{hexagon::Rectangle, land_grid::LandTile, GameState};
-use bevy::prelude::*;
+use bevy::{ecs::system::EntityCommands, prelude::*};
 use rand::{prelude::ThreadRng, Rng};
 
 pub struct WorldGenPlugin;
@@ -68,40 +68,38 @@ fn generate_world(mut commands: Commands, sim_params: Res<SimParams>, materials:
     }
 }
 
-fn spawn_sprite_bundles(
-    commands: &mut Commands,
+fn spawn_sprite_bundles<'a, 'b>(
+    commands: &'b mut Commands<'a>,
     bounding_box: Vec3,
     main_material: Handle<ColorMaterial>,
     shadow: Handle<ColorMaterial>,
     world_size: Vec2,
-) {
-    // TODO: return here
-
-    commands
-        .spawn_bundle(SpriteBundle {
-            transform: Transform::from_translation(Vec3::new(
-                bounding_box.x,
-                bounding_box.y,
-                OBJECT_LAYER + world_size.y - bounding_box.z,
-            )),
+) -> EntityCommands<'a, 'b> {
+    let mut entity = commands.spawn_bundle(SpriteBundle {
+        transform: Transform::from_translation(Vec3::new(
+            bounding_box.x,
+            bounding_box.y,
+            OBJECT_LAYER + world_size.y - bounding_box.z,
+        )),
+        ..Default::default()
+    });
+    entity.with_children(|parent| {
+        parent.spawn_bundle(SpriteBundle {
+            material: main_material.clone(),
+            transform: Transform::from_translation(
+                Vec2::new(0.0, bounding_box.z / 2.0).extend(OBJECT_LAYER),
+            ),
+            sprite: Sprite::new(Vec2::new(bounding_box.x, bounding_box.y)),
             ..Default::default()
-        })
-        .with_children(|parent| {
-            parent.spawn_bundle(SpriteBundle {
-                material: main_material.clone(),
-                transform: Transform::from_translation(
-                    Vec2::new(0.0, bounding_box.z / 2.0).extend(OBJECT_LAYER),
-                ),
-                sprite: Sprite::new(Vec2::new(bounding_box.x, bounding_box.y)),
-                ..Default::default()
-            });
-            parent.spawn_bundle(SpriteBundle {
-                transform: Transform::from_translation(Vec2::new(0.0, 0.0).extend(SHADOW_LAYER)),
-                sprite: Sprite::new(Vec2::new(bounding_box.x, bounding_box.y / 2.0)),
-                material: shadow.clone(),
-                ..Default::default()
-            });
-        })
+        });
+        parent.spawn_bundle(SpriteBundle {
+            transform: Transform::from_translation(Vec2::new(0.0, 0.0).extend(SHADOW_LAYER)),
+            sprite: Sprite::new(Vec2::new(bounding_box.x, bounding_box.y / 2.0)),
+            material: shadow.clone(),
+            ..Default::default()
+        });
+    });
+    entity
 }
 
 fn gen_villager(
