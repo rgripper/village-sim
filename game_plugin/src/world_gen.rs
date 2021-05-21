@@ -1,12 +1,13 @@
 use crate::{
     creature::Creature,
-    layers::{OBJECT_LAYER, SHADOW_LAYER, TILE_LAYER},
+    layers::{TILE_LAYER},
     loading::Materials,
     plants::{get_scale_from_tree_size, PlantSize, Seeder},
+    sprite_helpers::spawn_sprite_bundles,
 };
 use crate::{hexagon::HexagonBuilder, plants::Tree};
 use crate::{hexagon::Rectangle, land_grid::LandTile, GameState};
-use bevy::{ecs::system::EntityCommands, prelude::*};
+use bevy::prelude::*;
 use rand::{prelude::ThreadRng, Rng};
 
 pub struct WorldGenPlugin;
@@ -64,53 +65,20 @@ fn generate_world(mut commands: Commands, sim_params: Res<SimParams>, materials:
     };
     for _ in 0..8 {
         let villager_pos = gen_in_rect(rng, &villager_start_rect);
-        gen_villager(&mut commands, &materials, &villager_pos, &sim_params);
+        gen_villager(&mut commands, &materials, villager_pos, &sim_params);
     }
-}
-
-fn spawn_sprite_bundles<'a, 'b>(
-    commands: &'b mut Commands<'a>,
-    bounding_box: Vec3,
-    main_material: Handle<ColorMaterial>,
-    shadow: Handle<ColorMaterial>,
-    world_size: Vec2,
-) -> EntityCommands<'a, 'b> {
-    let mut entity = commands.spawn_bundle(SpriteBundle {
-        transform: Transform::from_translation(Vec3::new(
-            bounding_box.x,
-            bounding_box.y,
-            OBJECT_LAYER + world_size.y - bounding_box.z,
-        )),
-        ..Default::default()
-    });
-    entity.with_children(|parent| {
-        parent.spawn_bundle(SpriteBundle {
-            material: main_material.clone(),
-            transform: Transform::from_translation(
-                Vec2::new(0.0, bounding_box.z / 2.0).extend(OBJECT_LAYER),
-            ),
-            sprite: Sprite::new(Vec2::new(bounding_box.x, bounding_box.y)),
-            ..Default::default()
-        });
-        parent.spawn_bundle(SpriteBundle {
-            transform: Transform::from_translation(Vec2::new(0.0, 0.0).extend(SHADOW_LAYER)),
-            sprite: Sprite::new(Vec2::new(bounding_box.x, bounding_box.y / 2.0)),
-            material: shadow.clone(),
-            ..Default::default()
-        });
-    });
-    entity
 }
 
 fn gen_villager(
     commands: &mut Commands,
     materials: &Res<Materials>,
-    villager_pos: &Vec2,
+    villager_pos: Vec2,
     sim_params: &Res<SimParams>,
 ) {
     let bounding_box = Vec3::new(16.0, 16.0, 16.0);
     spawn_sprite_bundles(
         commands,
+        villager_pos,
         bounding_box,
         materials.man.clone(),
         materials.shadow.clone(),
@@ -138,37 +106,25 @@ pub fn gen_tree(
         current: init_plant_size,
         max: 1.0,
     };
-    let mut transform =
-        Transform::from_translation(tree_pos.extend(OBJECT_LAYER + world_rect.size.y - tree_pos.y));
-    transform.scale = get_scale_from_tree_size(&plant_size);
 
-    commands
-        .spawn_bundle(SpriteBundle {
-            transform,
-            ..Default::default()
-        })
-        .with_children(|parent| {
-            parent.spawn_bundle(SpriteBundle {
-                material: tree_material.clone(),
-                transform: Transform::from_translation(Vec2::new(0.0, 0.0).extend(OBJECT_LAYER)),
-                sprite: Sprite::new(Vec2::new(24., 96.)),
-                ..Default::default()
-            });
-            // parent is a ChildBuilder, which has a similar API to Commands
-            parent.spawn_bundle(SpriteBundle {
-                transform: Transform::from_translation(Vec2::new(0.0, 0.0).extend(SHADOW_LAYER)),
-                sprite: Sprite::new(Vec2::new(48., 24.)),
-                material: shadow_material.clone(),
-                ..Default::default()
-            });
-        })
-        .insert(Tree)
-        .insert(Seeder {
-            seed_growth_per_second: (0.0..1.0),
-            seeds_since_last_time: 0.0,
-            survival_probability: 0.01,
-        })
-        .insert(plant_size);
+    // transform.scale = get_scale_from_tree_size(&plant_size);
+    let bounding_box = Vec3::new(24.0, 48.0, 24.0);
+
+    spawn_sprite_bundles(
+        commands,
+        tree_pos,
+        bounding_box,
+        tree_material.clone(),
+        shadow_material.clone(),
+        world_rect.size,
+    )
+    .insert(Tree)
+    .insert(Seeder {
+        seed_growth_per_second: (0.0..1.0),
+        seeds_since_last_time: 0.0,
+        survival_probability: 0.01,
+    })
+    .insert(plant_size);
 }
 
 fn create_land_grid(

@@ -7,6 +7,7 @@ mod layers;
 mod loading;
 mod menu;
 mod plants;
+mod sprite_helpers;
 mod world_gen;
 
 use crate::actions::ActionsPlugin;
