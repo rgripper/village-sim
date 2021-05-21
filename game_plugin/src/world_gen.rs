@@ -1,6 +1,6 @@
 use crate::{
     creature::Creature,
-    layers::{TILE_LAYER},
+    layers::TILE_LAYER,
     loading::Materials,
     plants::{get_scale_from_tree_size, PlantSize, Seeder},
     sprite_helpers::spawn_sprite_bundles,
@@ -78,6 +78,7 @@ fn gen_villager(
     let bounding_box = Vec3::new(16.0, 16.0, 16.0);
     spawn_sprite_bundles(
         commands,
+        Vec3::ONE,
         villager_pos,
         bounding_box,
         materials.man.clone(),
@@ -107,11 +108,11 @@ pub fn gen_tree(
         max: 1.0,
     };
 
-    // transform.scale = get_scale_from_tree_size(&plant_size);
     let bounding_box = Vec3::new(24.0, 48.0, 24.0);
 
     spawn_sprite_bundles(
         commands,
+        get_scale_from_tree_size(&plant_size),
         tree_pos,
         bounding_box,
         tree_material.clone(),

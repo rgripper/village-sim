@@ -8,21 +8,27 @@ use crate::layers::{OBJECT_LAYER, SHADOW_LAYER};
 
 pub fn spawn_sprite_bundles<'a, 'b>(
     commands: &'b mut Commands<'a>,
+    scale: Vec3,
     position: Vec2,
     bounding_box: Vec3,
     main_material: Handle<ColorMaterial>,
     shadow: Handle<ColorMaterial>,
     world_size: Vec2,
 ) -> EntityCommands<'a, 'b> {
-    let mut entity = commands.spawn_bundle(SpriteBundle {
-        transform: Transform::from_translation(Vec3::new(
-            position.x,
-            position.y,
-            OBJECT_LAYER + world_size.y - position.y,
-        )),
+    let mut entityCommands = commands.spawn_bundle(SpriteBundle {
+        transform: Transform {
+            translation: Vec3::new(
+                position.x,
+                position.y,
+                OBJECT_LAYER + world_size.y - position.y,
+            ),
+            scale,
+            ..Default::default()
+        },
         ..Default::default()
     });
-    entity.with_children(|parent| {
+
+    entityCommands.with_children(|parent| {
         parent.spawn_bundle(SpriteBundle {
             material: main_material.clone(),
             transform: Transform::from_translation(
@@ -38,5 +44,5 @@ pub fn spawn_sprite_bundles<'a, 'b>(
             ..Default::default()
         });
     });
-    entity
+    entityCommands
 }
