@@ -15,7 +15,7 @@ pub fn spawn_sprite_bundles<'a, 'b>(
     shadow: Handle<ColorMaterial>,
     world_size: Vec2,
 ) -> EntityCommands<'a, 'b> {
-    let mut entityCommands = commands.spawn_bundle(SpriteBundle {
+    let mut entity_commands = commands.spawn_bundle(SpriteBundle {
         transform: Transform {
             translation: Vec3::new(
                 position.x,
@@ -28,7 +28,7 @@ pub fn spawn_sprite_bundles<'a, 'b>(
         ..Default::default()
     });
 
-    entityCommands.with_children(|parent| {
+    entity_commands.with_children(|parent| {
         parent.spawn_bundle(SpriteBundle {
             material: main_material.clone(),
             transform: Transform::from_translation(
@@ -44,5 +44,5 @@ pub fn spawn_sprite_bundles<'a, 'b>(
             ..Default::default()
         });
     });
-    entityCommands
+    entity_commands
 }

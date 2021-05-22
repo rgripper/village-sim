@@ -52,11 +52,8 @@ impl Plugin for PlantLifePlugin {
     }
 }
 
-fn grow(
-    time: Res<Time>,
-    mut plant_size_query: Query<(&mut Transform, &mut Sprite, &mut PlantSize)>,
-) {
-    for (mut transform, mut sprite, mut plant_size) in plant_size_query.iter_mut() {
+fn grow(time: Res<Time>, mut plant_size_query: Query<(&mut Transform, &mut PlantSize)>) {
+    for (mut transform, mut plant_size) in plant_size_query.iter_mut() {
         set_tree_size(&time, &mut transform, &mut plant_size);
     }
 }
@@ -76,14 +73,14 @@ pub fn set_tree_size(
 
 fn seed(
     time: Res<Time>,
-    mut seeder_query: Query<(Entity, &Transform, &mut Seeder)>,
+    mut seeder_query: Query<(&Transform, &mut Seeder)>,
     mut commands: Commands,
     materials: Res<Materials>,
     sim_params: Res<SimParams>,
 ) {
     let rng = &mut rand::thread_rng();
 
-    for (entity, transform, mut seeder) in seeder_query.iter_mut() {
+    for (transform, mut seeder) in seeder_query.iter_mut() {
         let trees = seeder.produce(time.delta_seconds());
         for _ in 0..trees {
             let tree_pos = gen_in_rect(
