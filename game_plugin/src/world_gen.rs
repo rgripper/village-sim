@@ -1,4 +1,5 @@
 use crate::{
+    audio::Ambience,
     creature::Creature,
     layers::TILE_LAYER,
     loading::Materials,
@@ -30,6 +31,8 @@ impl Plugin for WorldGenPlugin {
 }
 
 fn generate_world(mut commands: Commands, sim_params: Res<SimParams>, materials: Res<Materials>) {
+    commands.spawn().insert(Ambience { is_forest: true });
+
     let (world_columns, world_rows) = sim_params
         .hexagon_builder
         .get_world_columns_rows(sim_params.world_rect.size.x, sim_params.world_rect.size.y);
