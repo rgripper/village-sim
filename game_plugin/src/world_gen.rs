@@ -1,10 +1,10 @@
 use crate::{
     audio::Ambience,
-    creature::Creature,
     layers::TILE_LAYER,
     loading::Materials,
     plants::{get_scale_from_tree_size, PlantSize, Seeder},
     sprite_helpers::spawn_sprite_bundles,
+    village::Villager,
 };
 use crate::{hexagon::HexagonBuilder, plants::Tree};
 use crate::{hexagon::Rectangle, land_grid::LandTile, GameState};
@@ -88,7 +88,7 @@ fn gen_villager(
         materials.shadow.clone(),
         sim_params.world_rect.size,
     )
-    .insert(Creature);
+    .insert(Villager { fatigue: 0.0 });
 }
 
 pub fn gen_in_rect(rng: &mut ThreadRng, rect: &Rectangle) -> Vec2 {

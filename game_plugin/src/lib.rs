@@ -1,6 +1,5 @@
 mod actions;
 mod audio;
-mod creature;
 mod hexagon;
 mod land_grid;
 mod layers;
@@ -8,6 +7,7 @@ mod loading;
 mod menu;
 mod plants;
 mod sprite_helpers;
+mod village;
 mod world_gen;
 
 use crate::actions::ActionsPlugin;
