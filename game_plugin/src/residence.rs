@@ -11,26 +11,29 @@ use crate::{
     world_gen::SimParams,
 };
 
-pub struct ResidentJoinedEvent(pub Entity);
+pub struct CreatureJoinedVillageEvent(pub Entity);
 
-pub struct ResidentLeftEvent(pub Entity);
+pub struct CreatureLeftVillageEvent(pub Entity);
 
-pub struct ResidentSettledEvent {
+pub struct VillagerSettledEvent {
     pub resident: Entity,
-    pub dwelling: Entity,
+    pub residence: Entity,
 }
 
 pub struct Resident {
+    pub residence_entity: Entity,
+}
+
+pub struct Villager {
     pub task: Option<VillageTask>,
-    pub dwelling: Option<Entity>,
 }
 
 pub struct ResidencePlugin;
 
 impl Plugin for ResidencePlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_event::<ResidentJoinedEvent>()
-            .add_event::<ResidentLeftEvent>();
+        app.add_event::<CreatureJoinedVillageEvent>()
+            .add_event::<CreatureLeftVillageEvent>();
     }
 }
 
@@ -50,8 +53,7 @@ pub fn gen_resident(
         materials.shadow.clone(),
         sim_params.world_rect.size,
     )
-    .insert(Resident {
-        dwelling: Option::<Entity>::None,
+    .insert(Villager {
         task: Option::<VillageTask>::None,
     })
     .insert(Creature {
