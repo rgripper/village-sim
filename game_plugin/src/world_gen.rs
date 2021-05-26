@@ -3,8 +3,8 @@ use crate::{
     layers::TILE_LAYER,
     loading::Materials,
     plants::{get_scale_from_tree_size, PlantSize, Seeder},
+    residence::gen_resident,
     sprite_helpers::spawn_sprite_bundles,
-    village::Villager,
 };
 use crate::{hexagon::HexagonBuilder, plants::Tree};
 use crate::{hexagon::Rectangle, land_grid::LandTile, GameState};
@@ -62,33 +62,14 @@ fn generate_world(mut commands: Commands, sim_params: Res<SimParams>, materials:
         );
     }
 
-    let villager_start_rect = Rectangle {
+    let resident_start_rect = Rectangle {
         position: sim_params.start_pos,
         size: Vec2::new(100., 100.),
     };
     for _ in 0..8 {
-        let villager_pos = gen_in_rect(rng, &villager_start_rect);
-        gen_villager(&mut commands, &materials, villager_pos, &sim_params);
+        let resident_pos = gen_in_rect(rng, &resident_start_rect);
+        gen_resident(&mut commands, &materials, resident_pos, &sim_params);
     }
-}
-
-fn gen_villager(
-    commands: &mut Commands,
-    materials: &Res<Materials>,
-    villager_pos: Vec2,
-    sim_params: &Res<SimParams>,
-) {
-    let bounding_box = Vec3::new(16.0, 16.0, 16.0);
-    spawn_sprite_bundles(
-        commands,
-        Vec3::ONE,
-        villager_pos,
-        bounding_box,
-        materials.man.clone(),
-        materials.shadow.clone(),
-        sim_params.world_rect.size,
-    )
-    .insert(Villager { fatigue: 0.0 });
 }
 
 pub fn gen_in_rect(rng: &mut ThreadRng, rect: &Rectangle) -> Vec2 {

@@ -1,11 +1,13 @@
 mod actions;
 mod audio;
+mod creatures;
 mod hexagon;
 mod land_grid;
 mod layers;
 mod loading;
 mod menu;
 mod plants;
+mod residence;
 mod sprite_helpers;
 mod village;
 mod world_gen;
