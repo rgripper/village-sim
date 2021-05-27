@@ -1,12 +1,7 @@
 use crate::{
-    creatures::{ConstructionSkill, Creature, CreatureActivity, Fatigue},
-    loading::Materials,
     residence::{CreatureJoinedVillageEvent, CreatureLeftVillageEvent, Resident},
-    sprite_helpers::spawn_sprite_bundles,
-    world_gen::SimParams,
     GameState,
 };
-use bevy::core::Time;
 use bevy::prelude::*;
 
 pub enum VillageTask {
@@ -22,17 +17,15 @@ pub enum PlannedBuildingType {
     Storage,
 }
 
+pub struct LivingSpace {
+    pub max_people: u32,
+    pub current_people: u32,
+}
+
 pub struct Village {
     pub wood: f32,
     pub habitants_count: u32,
     pub homeless_count: u32,
-}
-
-pub struct Building;
-
-pub struct LivingSpace {
-    max_people: u32,
-    current_people: u32,
 }
 
 // pub struct Construction {
@@ -53,9 +46,9 @@ pub struct LivingSpaceAvailableEvent {
     pub residence_entity: Entity,
 }
 
-struct VillagePlugin;
+pub struct VillagePlugin;
 
-impl Plugin for Village {
+impl Plugin for VillagePlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_system_set(
             SystemSet::on_update(GameState::Playing)
@@ -66,8 +59,9 @@ impl Plugin for Village {
     }
 }
 
+pub struct Building;
+
 fn control_residence(
-    mut commands: Commands,
     mut village_query: Query<&mut Village>,
     resident_query: Query<&Resident>,
     mut ev_residents_joined: EventReader<CreatureJoinedVillageEvent>,

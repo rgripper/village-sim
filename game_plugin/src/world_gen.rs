@@ -1,12 +1,10 @@
+use crate::hexagon::HexagonBuilder;
+use crate::residence::CreatureJoinedVillageEvent;
+use crate::village::Village;
 use crate::{
-    audio::Ambience,
-    layers::TILE_LAYER,
-    loading::Materials,
-    plants::{get_scale_from_tree_size, PlantSize, Seeder},
-    residence::gen_resident,
-    sprite_helpers::spawn_sprite_bundles,
+    audio::Ambience, buildings::spawn_house, layers::TILE_LAYER, loading::Materials,
+    plants::spawn_tree, residence::spawn_villager,
 };
-use crate::{hexagon::HexagonBuilder, plants::Tree};
 use crate::{hexagon::Rectangle, land_grid::LandTile, GameState};
 use bevy::prelude::*;
 use rand::{prelude::ThreadRng, Rng};
@@ -30,7 +28,12 @@ impl Plugin for WorldGenPlugin {
     }
 }
 
-fn generate_world(mut commands: Commands, sim_params: Res<SimParams>, materials: Res<Materials>) {
+fn generate_world(
+    mut commands: Commands,
+    sim_params: Res<SimParams>,
+    materials: Res<Materials>,
+    mut ev_creature_joined_village: EventWriter<CreatureJoinedVillageEvent>,
+) {
     commands.spawn().insert(Ambience { is_forest: true });
 
     let (world_columns, world_rows) = sim_params
@@ -52,7 +55,7 @@ fn generate_world(mut commands: Commands, sim_params: Res<SimParams>, materials:
 
     for _ in 0..36 {
         let tree_pos = gen_in_rect(rng, &sim_params.world_rect);
-        gen_tree(
+        spawn_tree(
             tree_pos,
             rng.gen_range(0.0..1.0),
             &sim_params.world_rect,
@@ -62,14 +65,31 @@ fn generate_world(mut commands: Commands, sim_params: Res<SimParams>, materials:
         );
     }
 
-    let resident_start_rect = Rectangle {
+    let village_start_rect = Rectangle {
         position: sim_params.start_pos,
         size: Vec2::new(100., 100.),
     };
     for _ in 0..8 {
-        let resident_pos = gen_in_rect(rng, &resident_start_rect);
-        gen_resident(&mut commands, &materials, resident_pos, &sim_params);
+        let resident_pos = gen_in_rect(rng, &village_start_rect);
+        spawn_villager(
+            &mut commands,
+            &materials,
+            resident_pos,
+            &sim_params,
+            &mut ev_creature_joined_village,
+        );
     }
+
+    for _ in 0..2 {
+        let house_pos = gen_in_rect(rng, &village_start_rect);
+        spawn_house(&mut commands, &materials, house_pos, &sim_params, 2);
+    }
+
+    commands.spawn().insert(Village {
+        habitants_count: 0,
+        homeless_count: 0,
+        wood: 0.0,
+    });
 }
 
 pub fn gen_in_rect(rng: &mut ThreadRng, rect: &Rectangle) -> Vec2 {
@@ -77,39 +97,6 @@ pub fn gen_in_rect(rng: &mut ThreadRng, rect: &Rectangle) -> Vec2 {
         rng.gen_range(rect.position.x - rect.size.x / 2.0..rect.position.x + rect.size.x / 2.0),
         rng.gen_range(rect.position.y - rect.size.y / 2.0..rect.position.y + rect.size.y / 2.0),
     )
-}
-
-pub fn gen_tree(
-    tree_pos: Vec2,
-    init_plant_size: f32,
-    world_rect: &Rectangle,
-    commands: &mut Commands,
-    tree_material: &Handle<ColorMaterial>,
-    shadow_material: &Handle<ColorMaterial>,
-) {
-    let plant_size = PlantSize {
-        current: init_plant_size,
-        max: 1.0,
-    };
-
-    let bounding_box = Vec3::new(24.0, 48.0, 24.0);
-
-    spawn_sprite_bundles(
-        commands,
-        get_scale_from_tree_size(&plant_size),
-        tree_pos,
-        bounding_box,
-        tree_material.clone(),
-        shadow_material.clone(),
-        world_rect.size,
-    )
-    .insert(Tree)
-    .insert(Seeder {
-        seed_growth_per_second: (0.0..1.0),
-        seeds_since_last_time: 0.0,
-        survival_probability: 0.01,
-    })
-    .insert(plant_size);
 }
 
 fn create_land_grid(

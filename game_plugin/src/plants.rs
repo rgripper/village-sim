@@ -31,12 +31,7 @@ impl Seeder {
 
 use std::{convert::TryInto, ops::Range};
 
-use crate::{
-    hexagon::Rectangle,
-    loading::Materials,
-    world_gen::{gen_in_rect, gen_tree, SimParams},
-    GameState,
-};
+use crate::{GameState, hexagon::Rectangle, loading::Materials, sprite_helpers::spawn_sprite_bundles, world_gen::{gen_in_rect, SimParams}};
 use bevy::prelude::*;
 use rand::Rng;
 
@@ -91,7 +86,7 @@ fn seed(
                 },
             );
 
-            gen_tree(
+            spawn_tree(
                 tree_pos,
                 0.0,
                 &sim_params.world_rect,
@@ -105,4 +100,37 @@ fn seed(
 
 pub fn get_scale_from_tree_size(plant_size: &PlantSize) -> Vec3 {
     Vec3::new(plant_size.current, plant_size.current, 1.0)
+}
+
+pub fn spawn_tree(
+    pos: Vec2,
+    init_plant_size: f32,
+    world_rect: &Rectangle,
+    commands: &mut Commands,
+    tree_material: &Handle<ColorMaterial>,
+    shadow_material: &Handle<ColorMaterial>,
+) {
+    let plant_size = PlantSize {
+        current: init_plant_size,
+        max: 1.0,
+    };
+
+    let bounding_box = Vec3::new(24.0, 48.0, 24.0);
+
+    spawn_sprite_bundles(
+        commands,
+        get_scale_from_tree_size(&plant_size),
+        pos,
+        bounding_box,
+        tree_material.clone(),
+        shadow_material.clone(),
+        world_rect.size,
+    )
+    .insert(Tree)
+    .insert(Seeder {
+        seed_growth_per_second: (0.0..1.0),
+        seeds_since_last_time: 0.0,
+        survival_probability: 0.01,
+    })
+    .insert(plant_size);
 }

@@ -38,6 +38,7 @@ pub struct Materials {
     pub tree: Handle<ColorMaterial>,
     pub man: Handle<ColorMaterial>,
     pub shadow: Handle<ColorMaterial>,
+    pub house: Handle<ColorMaterial>,
 }
 
 fn start_loading(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -49,6 +50,7 @@ fn start_loading(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     let mut textures: Vec<HandleUntyped> = vec![];
     textures.push(asset_server.load_untyped(PATHS.texture_tree));
+    textures.push(asset_server.load_untyped(PATHS.texture_house));
     textures.push(asset_server.load_untyped(PATHS.texture_man));
     textures.push(asset_server.load_untyped(PATHS.texture_grad_shadow));
 
@@ -93,6 +95,7 @@ fn check_state(
     commands.insert_resource(Materials {
         tile: materials.add(Color::rgb(0.5, 0.78, 0.52).into()),
         man: materials.add(asset_server.get_handle(PATHS.texture_man).clone().into()),
+        house: materials.add(asset_server.get_handle(PATHS.texture_house).clone().into()),
         tree: materials.add(asset_server.get_handle(PATHS.texture_tree).clone().into()),
         shadow: materials.add(
             asset_server

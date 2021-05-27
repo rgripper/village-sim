@@ -1,5 +1,6 @@
 mod actions;
 mod audio;
+mod buildings;
 mod creatures;
 mod hexagon;
 mod land_grid;
@@ -21,6 +22,8 @@ use bevy::app::AppBuilder;
 // use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use plants::PlantLifePlugin;
+use residence::ResidencePlugin;
+use village::VillagePlugin;
 use world_gen::WorldGenPlugin;
 
 #[derive(Clone, Eq, PartialEq, Debug, Hash)]
@@ -39,8 +42,10 @@ impl Plugin for GamePlugin {
             .add_plugin(ActionsPlugin)
             .add_plugin(MenuPlugin)
             .add_plugin(InternalAudioPlugin)
-            .add_plugin(WorldGenPlugin)
+            .add_plugin(VillagePlugin)
+            .add_plugin(ResidencePlugin)
             .add_plugin(PlantLifePlugin)
+            .add_plugin(WorldGenPlugin)
 
             // .add_plugin(FrameTimeDiagnosticsPlugin::default())
             // .add_plugin(LogDiagnosticsPlugin::default())

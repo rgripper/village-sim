@@ -1,6 +1,6 @@
 use bevy::{
     math::{Vec2, Vec3},
-    prelude::{AppBuilder, Commands, Entity, Plugin, Res},
+    prelude::{AppBuilder, Commands, Entity, EventWriter, Plugin, Res},
 };
 
 use crate::{
@@ -37,17 +37,18 @@ impl Plugin for ResidencePlugin {
     }
 }
 
-pub fn gen_resident(
+pub fn spawn_villager(
     commands: &mut Commands,
     materials: &Res<Materials>,
-    villager_pos: Vec2,
+    pos: Vec2,
     sim_params: &Res<SimParams>,
+    ev_creature_joined_village: &mut EventWriter<CreatureJoinedVillageEvent>,
 ) {
     let bounding_box = Vec3::new(16.0, 16.0, 16.0);
-    spawn_sprite_bundles(
+    let creature_entity = spawn_sprite_bundles(
         commands,
         Vec3::ONE,
-        villager_pos,
+        pos,
         bounding_box,
         materials.man.clone(),
         materials.shadow.clone(),
@@ -60,5 +61,9 @@ pub fn gen_resident(
         activity: CreatureActivity::Standing,
     })
     .insert(Fatigue(0.0))
-    .insert(ConstructionSkill(0.75)); // just a sample value, 75% of the standard speed
+    .insert(ConstructionSkill(0.75)) // just a sample value, 75% of the standard speed
+    .id();
+
+    ev_creature_joined_village.send(CreatureJoinedVillageEvent(creature_entity));
+    // TODO: joined village
 }
