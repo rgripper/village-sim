@@ -6,7 +6,7 @@ use bevy::{
 use crate::{
     loading::Materials,
     sprite_helpers::spawn_sprite_bundles_,
-    village::{Building, LivingSpace},
+    village::{Building, LivingSpace, LivingSpaceAvailableEvent},
     world_gen::SimParams,
 };
 
@@ -16,9 +16,10 @@ pub fn spawn_house(
     pos: Vec2,
     sim_params: &Res<SimParams>,
     max_people: u32,
+    ev_living_space_available: &mut EventWriter<LivingSpaceAvailableEvent>,
 ) {
     let bounding_box = Vec3::new(40.0, 30.0, 40.0);
-    spawn_sprite_bundles_(
+    let residence_id = spawn_sprite_bundles_(
         commands,
         Vec3::ONE,
         pos,
@@ -32,5 +33,8 @@ pub fn spawn_house(
     .insert(LivingSpace {
         current_people: 0,
         max_people,
-    });
+    })
+    .id();
+
+    ev_living_space_available.send(LivingSpaceAvailableEvent { residence_id })
 }

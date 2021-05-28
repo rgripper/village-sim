@@ -31,7 +31,13 @@ impl Seeder {
 
 use std::{convert::TryInto, ops::Range};
 
-use crate::{GameState, hexagon::Rectangle, loading::Materials, sprite_helpers::spawn_sprite_bundles, world_gen::{gen_in_rect, SimParams}};
+use crate::{
+    hexagon::Rectangle,
+    loading::Materials,
+    sprite_helpers::spawn_sprite_bundles,
+    world_gen::{gen_in_rect, SimParams},
+    GameState,
+};
 use bevy::prelude::*;
 use rand::Rng;
 

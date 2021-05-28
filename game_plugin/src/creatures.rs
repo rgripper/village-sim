@@ -1,4 +1,5 @@
 pub struct Creature {
+    pub name: &'static str,
     pub activity: CreatureActivity,
 }
 

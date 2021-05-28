@@ -1,4 +1,5 @@
 use crate::{
+    creatures::Creature,
     residence::{CreatureJoinedVillageEvent, CreatureLeftVillageEvent, Resident},
     GameState,
 };
@@ -43,7 +44,7 @@ pub struct Village {
 // }
 
 pub struct LivingSpaceAvailableEvent {
-    pub residence_entity: Entity,
+    pub residence_id: Entity,
 }
 
 pub struct VillagePlugin;
@@ -72,11 +73,11 @@ fn control_residence(
         .single_mut()
         .expect("So far there must be one village");
 
-    for CreatureLeftVillageEvent(creature_entity) in ev_residents_left.iter() {
+    for CreatureLeftVillageEvent(creature_id) in ev_residents_left.iter() {
         village.habitants_count -= 1;
-        if let Result::Ok(resident) = resident_query.get(*creature_entity) {
+        if let Result::Ok(resident) = resident_query.get(*creature_id) {
             ev_living_space_available.send(LivingSpaceAvailableEvent {
-                residence_entity: resident.residence_entity,
+                residence_id: resident.residence_id,
             });
         }
     }
@@ -92,21 +93,30 @@ fn control_residence(
 fn house_homeless(
     mut commands: Commands,
     mut ev_living_space_available: EventReader<LivingSpaceAvailableEvent>,
-    homeless_query: Query<Entity, Without<LivingSpace>>,
+    homeless_query: Query<Entity, (With<Creature>, Without<Resident>)>,
     mut living_space_query: Query<&mut LivingSpace>,
+    creature_query: Query<&Creature>,
 ) {
-    for LivingSpaceAvailableEvent { residence_entity } in ev_living_space_available.iter() {
-        for homeless_entity in homeless_query.iter() {
-            commands.entity(homeless_entity).insert(Resident {
-                residence_entity: *residence_entity,
+    let mut living_space_events_iter = ev_living_space_available.iter();
+
+    for homeless_id in homeless_query.iter() {
+        if let Some(LivingSpaceAvailableEvent { residence_id }) = living_space_events_iter.next() {
+            commands.entity(homeless_id).insert(Resident {
+                residence_id: *residence_id,
             });
-            if let Result::Ok(mut living_space) = living_space_query.get_mut(*residence_entity) {
+
+            let creature = creature_query.get(homeless_id);
+            println!(
+                "Villager '{}' is assigned a residence",
+                creature.unwrap().name
+            );
+            if let Result::Ok(mut living_space) = living_space_query.get_mut(*residence_id) {
                 if living_space.current_people == living_space.max_people {
                     panic!("Residence could not have more residents");
                 }
                 living_space.current_people += 1;
             }
-
+        } else {
             break;
         }
     }

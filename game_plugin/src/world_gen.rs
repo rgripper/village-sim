@@ -1,5 +1,6 @@
 use crate::hexagon::HexagonBuilder;
 use crate::residence::CreatureJoinedVillageEvent;
+use crate::village::LivingSpaceAvailableEvent;
 use crate::village::Village;
 use crate::{
     audio::Ambience, buildings::spawn_house, layers::TILE_LAYER, loading::Materials,
@@ -33,6 +34,7 @@ fn generate_world(
     sim_params: Res<SimParams>,
     materials: Res<Materials>,
     mut ev_creature_joined_village: EventWriter<CreatureJoinedVillageEvent>,
+    mut ev_living_space_available: EventWriter<LivingSpaceAvailableEvent>,
 ) {
     commands.spawn().insert(Ambience { is_forest: true });
 
@@ -82,7 +84,14 @@ fn generate_world(
 
     for _ in 0..2 {
         let house_pos = gen_in_rect(rng, &village_start_rect);
-        spawn_house(&mut commands, &materials, house_pos, &sim_params, 2);
+        spawn_house(
+            &mut commands,
+            &materials,
+            house_pos,
+            &sim_params,
+            2,
+            &mut ev_living_space_available,
+        );
     }
 
     commands.spawn().insert(Village {

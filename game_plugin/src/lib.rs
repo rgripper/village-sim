@@ -12,6 +12,7 @@ mod residence;
 mod sprite_helpers;
 mod village;
 mod world_gen;
+mod random_names;
 
 use crate::actions::ActionsPlugin;
 use crate::audio::InternalAudioPlugin;

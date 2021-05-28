@@ -2,10 +2,12 @@ use bevy::{
     math::{Vec2, Vec3},
     prelude::{AppBuilder, Commands, Entity, EventWriter, Plugin, Res},
 };
+use rand::{prelude::ThreadRng, Rng};
 
 use crate::{
     creatures::{ConstructionSkill, Creature, CreatureActivity, Fatigue},
     loading::Materials,
+    random_names::RANDOM_NAMES,
     sprite_helpers::spawn_sprite_bundles,
     village::VillageTask,
     world_gen::SimParams,
@@ -21,7 +23,7 @@ pub struct VillagerSettledEvent {
 }
 
 pub struct Resident {
-    pub residence_entity: Entity,
+    pub residence_id: Entity,
 }
 
 pub struct Villager {
@@ -45,7 +47,8 @@ pub fn spawn_villager(
     ev_creature_joined_village: &mut EventWriter<CreatureJoinedVillageEvent>,
 ) {
     let bounding_box = Vec3::new(16.0, 16.0, 16.0);
-    let creature_entity = spawn_sprite_bundles(
+    let name = RANDOM_NAMES[rand::thread_rng().gen_range(0..RANDOM_NAMES.len() - 1)];
+    let creature_id = spawn_sprite_bundles(
         commands,
         Vec3::ONE,
         pos,
@@ -58,12 +61,13 @@ pub fn spawn_villager(
         task: Option::<VillageTask>::None,
     })
     .insert(Creature {
+        name,
         activity: CreatureActivity::Standing,
     })
     .insert(Fatigue(0.0))
     .insert(ConstructionSkill(0.75)) // just a sample value, 75% of the standard speed
     .id();
 
-    ev_creature_joined_village.send(CreatureJoinedVillageEvent(creature_entity));
+    ev_creature_joined_village.send(CreatureJoinedVillageEvent(creature_id));
     // TODO: joined village
 }
