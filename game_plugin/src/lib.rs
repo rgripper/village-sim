@@ -1,5 +1,6 @@
 mod actions;
 mod audio;
+mod behaviour;
 mod buildings;
 mod creatures;
 mod hexagon;
@@ -7,19 +8,20 @@ mod land_grid;
 mod layers;
 mod loading;
 mod menu;
+mod physics;
 mod plants;
+mod random_names;
 mod residence;
 mod sprite_helpers;
 mod village;
 mod world_gen;
-mod random_names;
-mod physics;
 
 use crate::actions::ActionsPlugin;
 use crate::audio::InternalAudioPlugin;
 use crate::loading::LoadingPlugin;
 use crate::menu::MenuPlugin;
 
+use behaviour::MovementPlugin;
 use bevy::app::AppBuilder;
 // use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
@@ -48,7 +50,7 @@ impl Plugin for GamePlugin {
             .add_plugin(ResidencePlugin)
             .add_plugin(PlantLifePlugin)
             .add_plugin(WorldGenPlugin)
-
+            .add_plugin(MovementPlugin)
             // .add_plugin(FrameTimeDiagnosticsPlugin::default())
             // .add_plugin(LogDiagnosticsPlugin::default())
             ;

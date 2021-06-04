@@ -1,26 +1,24 @@
+use bevy::math::Vec2;
+
 pub struct PhysicalObject {
-    position: Vec2,
+    pub position: Vec2,
 }
 
-pub struct Velocity(pub Vec2);
+pub struct Speed(pub f32); // TODO: deprecate in favour of Velocity
 
-pub struct Mobile(Velocity);
+// pub struct Velocity {
+//     pub speed: f32,
+//     pub direction: Vec2,
+// }
 
-pub struct Walker {
-    pub acceleration: f32,
-    pub max_speed: f32,
-}
+pub struct Mobile(pub Speed);
 
-pub struct Path(Vec<Vec2>);
-
-// TODO: a villager could be a combo of the following components: (Mobile, Walker, Path)
-
-pub fn walking(mut moving_query: Query<&Walker, &mut Mobile>) {
-    for (mut walker, mut mobile) in moving_query.iter_mut() {
-        moving.current_speed = walker
-            .max_speed
-            .min(moving.current_speed + moving.acceleration);
+pub fn get_point_between(point1: Vec2, point2: Vec2, distance_from_point1: f32) -> Vec2 {
+    let total_distance = point2.distance(point1);
+    if distance_from_point1 >= total_distance {
+        return point2;
     }
-    // accelerate
-    // max speed
+
+    let s = distance_from_point1 / total_distance;
+    point1.lerp(point2, s)
 }
