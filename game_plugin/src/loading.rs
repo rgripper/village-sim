@@ -36,6 +36,7 @@ pub struct AudioAssets {
 pub struct Materials {
     pub tile: Handle<ColorMaterial>,
     pub tree: Handle<ColorMaterial>,
+    pub wood_logs: Handle<ColorMaterial>,
     pub man: Handle<ColorMaterial>,
     pub shadow: Handle<ColorMaterial>,
     pub house: Handle<ColorMaterial>,
@@ -50,6 +51,7 @@ fn start_loading(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     let mut textures: Vec<HandleUntyped> = vec![];
     textures.push(asset_server.load_untyped(PATHS.texture_tree));
+    textures.push(asset_server.load_untyped(PATHS.texture_wood_logs));
     textures.push(asset_server.load_untyped(PATHS.texture_house));
     textures.push(asset_server.load_untyped(PATHS.texture_man));
     textures.push(asset_server.load_untyped(PATHS.texture_grad_shadow));
@@ -97,6 +99,12 @@ fn check_state(
         man: materials.add(asset_server.get_handle(PATHS.texture_man).clone().into()),
         house: materials.add(asset_server.get_handle(PATHS.texture_house).clone().into()),
         tree: materials.add(asset_server.get_handle(PATHS.texture_tree).clone().into()),
+        wood_logs: materials.add(
+            asset_server
+                .get_handle(PATHS.texture_wood_logs)
+                .clone()
+                .into(),
+        ),
         shadow: materials.add(
             asset_server
                 .get_handle(PATHS.texture_grad_shadow)
