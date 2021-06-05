@@ -1,0 +1,6 @@
+{
+  "name": "tasks",
+  "scripts": {
+    "deploy": "npx gh-pages -d ./build/web"
+  }
+}
