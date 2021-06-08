@@ -16,6 +16,7 @@ mod sprite_helpers;
 mod village;
 mod world_gen;
 mod time_cycle;
+mod tree_cutting;
 
 use crate::actions::ActionsPlugin;
 use crate::audio::InternalAudioPlugin;

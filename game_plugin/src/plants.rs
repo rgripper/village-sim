@@ -43,6 +43,8 @@ use rand::Rng;
 
 pub struct PlantLifePlugin;
 
+pub struct WoodResource(pub f32);
+
 impl Plugin for PlantLifePlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_system_set(
@@ -53,22 +55,27 @@ impl Plugin for PlantLifePlugin {
     }
 }
 
-fn grow(time: Res<Time>, mut plant_size_query: Query<(&mut Transform, &mut PlantSize)>) {
-    for (mut transform, mut plant_size) in plant_size_query.iter_mut() {
-        set_tree_size(&time, &mut transform, &mut plant_size);
+fn grow(
+    time: Res<Time>,
+    mut plant_size_query: Query<(&mut Transform, &mut PlantSize, &mut WoodResource)>,
+) {
+    for (mut transform, mut plant_size, mut wood_res) in plant_size_query.iter_mut() {
+        set_tree_size_and_resource(&time, &mut transform, &mut plant_size, &mut wood_res);
     }
 }
 
-pub fn set_tree_size(
+pub fn set_tree_size_and_resource(
     time: &Res<Time>,
     transform: &mut Mut<Transform>,
     plant_size: &mut Mut<PlantSize>,
+    wood_res: &mut Mut<WoodResource>,
 ) {
     if plant_size.current < plant_size.max {
         plant_size.current = plant_size
             .max
             .min(plant_size.current + 0.1 * time.delta_seconds());
-        transform.scale = get_scale_from_tree_size(&plant_size)
+        transform.scale = get_scale_from_tree_size(&plant_size);
+        wood_res.0 = plant_size.current;
     }
 }
 
@@ -133,6 +140,7 @@ pub fn spawn_tree(
         world_rect.size,
     )
     .insert(Tree)
+    .insert(WoodResource(0.0))
     .insert(Seeder {
         seed_growth_per_second: (0.0..1.0),
         seeds_since_last_time: 0.0,

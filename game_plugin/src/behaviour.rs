@@ -107,3 +107,7 @@ pub fn check_activity(
         }
     }
 }
+
+pub enum Intent {
+    CutTree(Entity),
+}
