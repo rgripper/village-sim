@@ -1,11 +1,12 @@
-use bevy::prelude::{Commands, Entity, EventWriter, Query};
+use bevy::prelude::*;
 
-use crate::{behaviour::Intent, physics::PhysicalObject};
-
-pub struct TravelToTargetEvent {
-    pub creature_id: Entity,
-    pub target_id: Entity,
-}
+use crate::{
+    actions::Actions,
+    behaviour::{CheckIntentEvent, Intent, TravelToTarget},
+    creatures::Creature,
+    physics::PhysicalObject,
+    GameState,
+};
 
 pub struct CuttingTree {
     pub tree_id: Entity,
@@ -20,30 +21,79 @@ pub struct ResourceStorage {
     pub wood: f32,
 }
 
-pub fn act_on_intent(
+pub struct IntentPlugin;
+
+impl Plugin for IntentPlugin {
+    fn build(&self, app: &mut AppBuilder) {
+        app.add_system_set(
+            SystemSet::on_update(GameState::Playing)
+                .with_system(check_intent.system())
+                .with_system(assign_intent.system()),
+        );
+    }
+}
+
+pub fn check_intent(
     mut commands: Commands,
+    intent_query: Query<&Intent>,
     physical_object_query: Query<&PhysicalObject>,
+    physical_object_id_query: Query<Entity, With<PhysicalObject>>,
     mut resource_carrier_query: Query<&mut ResourceCarrier>,
     mut resource_storage_query: Query<(&mut ResourceStorage, Entity)>,
+    mut ev_check_intent: EventReader<CheckIntentEvent>,
+) {
+    let creature_ids: Vec<&Entity> = ev_check_intent
+        .iter()
+        .map(|CheckIntentEvent(creature_id)| creature_id)
+        .collect();
+
+    for creature_id in creature_ids {
+        if let Ok(intent) = intent_query.get(*creature_id) {
+            act_on_intent(
+                &mut commands,
+                &physical_object_query,
+                &physical_object_id_query,
+                &mut resource_carrier_query,
+                &mut resource_storage_query,
+                creature_id,
+                intent,
+            )
+        }
+    }
+}
+
+pub fn assign_intent(
+    mut commands: Commands,
+    creature_without_intent_query: Query<Entity, (With<Creature>, Without<Intent>)>,
+) {
+    for (creature_id) in creature_without_intent_query.iter() {
+        commands.entity(creature_id).insert(Intent::Idle);
+    }
+}
+
+pub fn act_on_intent(
+    commands: &mut Commands,
+    physical_object_query: &Query<&PhysicalObject>,
+    physical_object_id_query: &Query<Entity, With<PhysicalObject>>,
+    resource_carrier_query: &mut Query<&mut ResourceCarrier>,
+    resource_storage_query: &mut Query<(&mut ResourceStorage, Entity)>,
     worker_id: &Entity,
     intent: &Intent,
-    mut ev_travel_to_target: EventWriter<TravelToTargetEvent>,
 ) {
     match intent {
         Intent::CutTree(tree_id) => {
             let (mut storage, storage_id) = resource_storage_query.single_mut().unwrap();
-            if !can_carry_more_wood(worker_id, &mut resource_carrier_query) {
-                // what was interrupted, and not taken as much wood as could carry
+            if !can_carry_more_wood(worker_id, resource_carrier_query) {
                 if is_located_near(physical_object_query, worker_id, &storage_id, 4.0) {
                     // what if storage could not contain more wood/resources
-                    store_wood(worker_id, &mut storage, &mut resource_carrier_query); // TODO: convert to either an event or a component
-                    commands.entity(*worker_id).remove::<Intent>(); // jsut a trigger to pick up the next intent
+                    store_wood(worker_id, &mut storage, resource_carrier_query);
+                    commands.entity(*worker_id).remove::<Intent>();
                 } else {
-                    // what if path is blocked, what if target moved
-                    ev_travel_to_target.send(TravelToTargetEvent {
-                        creature_id: *worker_id,
+                    commands.entity(*worker_id).insert(TravelToTarget {
+                        time_to_next_location_check: 0.0,
+                        last_target_position: None,
                         target_id: storage_id,
-                    });
+                    }); // jsut a trigger to pick up the next intent
                 }
             } else {
                 if is_located_near(physical_object_query, worker_id, tree_id, 4.0) {
@@ -51,14 +101,26 @@ pub fn act_on_intent(
                         .entity(*worker_id)
                         .insert(CuttingTree { tree_id: *tree_id });
                 } else {
-                    ev_travel_to_target.send(TravelToTargetEvent {
-                        creature_id: *worker_id,
+                    commands.entity(*worker_id).insert(TravelToTarget {
+                        time_to_next_location_check: 0.0,
+                        last_target_position: None,
                         target_id: *tree_id,
-                    });
+                    }); // jsut a trigger to pick up the next intent
                 }
             }
         }
-        _ => (),
+        Intent::Idle => {
+            // idling
+            let target_id = physical_object_id_query
+                .iter()
+                .find(|x| x != worker_id)
+                .unwrap(); // TODO: turn it back to random location walking
+            commands.entity(*worker_id).insert(TravelToTarget {
+                time_to_next_location_check: 0.0,
+                last_target_position: None,
+                target_id,
+            });
+        }
     }
 }
 
@@ -82,7 +144,7 @@ fn can_carry_more_wood(
 }
 
 fn is_located_near(
-    query: Query<&PhysicalObject>,
+    query: &Query<&PhysicalObject>,
     who_id: &Entity,
     where_id: &Entity,
     within_distance: f32,
