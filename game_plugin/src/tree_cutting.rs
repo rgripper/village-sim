@@ -40,22 +40,17 @@ pub fn check_intent(
     physical_object_id_query: Query<Entity, With<PhysicalObject>>,
     mut resource_carrier_query: Query<&mut ResourceCarrier>,
     mut resource_storage_query: Query<(&mut ResourceStorage, Entity)>,
-    mut ev_check_intent: EventReader<CheckIntentEvent>,
+    mut added_intent_query: Query<Entity, Added<Intent>>,
 ) {
-    let creature_ids: Vec<&Entity> = ev_check_intent
-        .iter()
-        .map(|CheckIntentEvent(creature_id)| creature_id)
-        .collect();
-
-    for creature_id in creature_ids {
-        if let Ok(intent) = intent_query.get(*creature_id) {
+    for creature_id in added_intent_query.iter() {
+        if let Ok(intent) = intent_query.get(creature_id) {
             act_on_intent(
                 &mut commands,
                 &physical_object_query,
                 &physical_object_id_query,
                 &mut resource_carrier_query,
                 &mut resource_storage_query,
-                creature_id,
+                &creature_id,
                 intent,
             )
         }
@@ -115,6 +110,7 @@ pub fn act_on_intent(
                 .iter()
                 .find(|x| x != worker_id)
                 .unwrap(); // TODO: turn it back to random location walking
+            println!("Worker moving to target");
             commands.entity(*worker_id).insert(TravelToTarget {
                 time_to_next_location_check: 0.0,
                 last_target_position: None,

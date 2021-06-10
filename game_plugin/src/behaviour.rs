@@ -48,31 +48,36 @@ pub fn go_to_target(
     {
         if travel_to_target.time_to_next_location_check == 0.0 {
             travel_to_target.time_to_next_location_check = recheck_position_interval;
-            travel_to_target.last_target_position =
-                Some(physical_object_query.get_mut(entity).unwrap().position);
+            travel_to_target.last_target_position = Some(
+                physical_object_query
+                    .get_mut(travel_to_target.target_id)
+                    .unwrap()
+                    .position,
+            );
         } else {
-            travel_to_target.time_to_next_location_check -= 0.0f32.max(time.delta_seconds());
+            travel_to_target.time_to_next_location_check -= time
+                .delta_seconds()
+                .min(travel_to_target.time_to_next_location_check);
         }
 
         let mut physical_object = physical_object_query.get_mut(entity).unwrap();
         let destination: Vec2 = travel_to_target.last_target_position.unwrap();
+        println!("Moving to a target located at {}", destination);
 
         if physical_object.position == destination {
             mobile.0 .0 = 0.0;
-            continue;
-        }
-
-        let new_speed = mobile.0 .0 + walker.acceleration * hours;
-        mobile.0 .0 = walker.max_speed.min(new_speed);
-
-        let speed = mobile.0 .0;
-        let distance_travelled = mobile.0 .0 * hours;
-        physical_object.position = get_point_between(physical_object.position, destination, speed);
-        transform.translation = physical_object.position.extend(transform.translation.z);
-
-        if physical_object.position == destination {
             commands.entity(entity).remove::<TravelToTarget>();
-            ev_check_intent.send(CheckIntentEvent(entity))
+            ev_check_intent.send(CheckIntentEvent(entity));
+            println!("Arrived to a target located at {}", destination);
+        } else {
+            let new_speed = mobile.0 .0 + walker.acceleration * hours;
+            mobile.0 .0 = walker.max_speed.min(new_speed);
+
+            let speed = mobile.0 .0;
+            let distance_travelled = mobile.0 .0 * hours;
+            physical_object.position =
+                get_point_between(physical_object.position, destination, speed);
+            transform.translation = physical_object.position.extend(transform.translation.z);
         }
     }
 }
