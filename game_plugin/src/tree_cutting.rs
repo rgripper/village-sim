@@ -2,9 +2,11 @@ use bevy::prelude::*;
 
 use crate::{
     actions::Actions,
-    behaviour::{CheckIntentEvent, Intent, TravelToTarget},
+    behaviour::{CheckIntentEvent, Intent, TravelToPosition, TravelToTarget},
     creatures::Creature,
+    hexagon::Rectangle,
     physics::PhysicalObject,
+    world_gen::{gen_in_rect, SimParams},
     GameState,
 };
 
@@ -35,24 +37,31 @@ impl Plugin for IntentPlugin {
 
 pub fn check_intent(
     mut commands: Commands,
+    sim_params: Res<SimParams>,
     intent_query: Query<&Intent>,
     physical_object_query: Query<&PhysicalObject>,
     physical_object_id_query: Query<Entity, With<PhysicalObject>>,
     mut resource_carrier_query: Query<&mut ResourceCarrier>,
     mut resource_storage_query: Query<(&mut ResourceStorage, Entity)>,
-    mut added_intent_query: Query<Entity, Added<Intent>>,
+    added_intent_query: Query<Entity, Added<Intent>>,
+    mut ev_intent_event: EventReader<CheckIntentEvent>,
 ) {
-    for creature_id in added_intent_query.iter() {
+    for creature_id in added_intent_query.iter().chain(
+        ev_intent_event
+            .iter()
+            .map(|CheckIntentEvent(creature_id)| *creature_id),
+    ) {
         if let Ok(intent) = intent_query.get(creature_id) {
             act_on_intent(
                 &mut commands,
+                &sim_params.world_rect,
                 &physical_object_query,
                 &physical_object_id_query,
                 &mut resource_carrier_query,
                 &mut resource_storage_query,
                 &creature_id,
                 intent,
-            )
+            );
         }
     }
 }
@@ -68,6 +77,7 @@ pub fn assign_intent(
 
 pub fn act_on_intent(
     commands: &mut Commands,
+    world_rect: &Rectangle,
     physical_object_query: &Query<&PhysicalObject>,
     physical_object_id_query: &Query<Entity, With<PhysicalObject>>,
     resource_carrier_query: &mut Query<&mut ResourceCarrier>,
@@ -105,17 +115,11 @@ pub fn act_on_intent(
             }
         }
         Intent::Idle => {
-            // idling
-            let target_id = physical_object_id_query
-                .iter()
-                .find(|x| x != worker_id)
-                .unwrap(); // TODO: turn it back to random location walking
-            println!("Worker moving to target");
-            commands.entity(*worker_id).insert(TravelToTarget {
-                time_to_next_location_check: 0.0,
-                last_target_position: None,
-                target_id,
-            });
+            let rng = &mut rand::thread_rng();
+            let position = gen_in_rect(rng, world_rect);
+            commands
+                .entity(*worker_id)
+                .insert(TravelToPosition { position });
         }
     }
 }
