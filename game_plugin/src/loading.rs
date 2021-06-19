@@ -37,6 +37,7 @@ pub struct Materials {
     pub tile: Handle<ColorMaterial>,
     pub tree: Handle<ColorMaterial>,
     pub wood_logs: Handle<ColorMaterial>,
+    pub stockpile: Handle<ColorMaterial>,
     pub man: Handle<ColorMaterial>,
     pub shadow: Handle<ColorMaterial>,
     pub house: Handle<ColorMaterial>,
@@ -55,6 +56,7 @@ fn start_loading(mut commands: Commands, asset_server: Res<AssetServer>) {
     textures.push(asset_server.load_untyped(PATHS.texture_house));
     textures.push(asset_server.load_untyped(PATHS.texture_man));
     textures.push(asset_server.load_untyped(PATHS.texture_grad_shadow));
+    textures.push(asset_server.load_untyped(PATHS.texture_stockpile));
 
     commands.insert_resource(LoadingState {
         textures,
@@ -108,6 +110,12 @@ fn check_state(
         shadow: materials.add(
             asset_server
                 .get_handle(PATHS.texture_grad_shadow)
+                .clone()
+                .into(),
+        ),
+        stockpile: materials.add(
+            asset_server
+                .get_handle(PATHS.texture_stockpile)
                 .clone()
                 .into(),
         ),

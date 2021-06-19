@@ -6,6 +6,7 @@ pub struct AssetPaths {
     pub texture_house: &'static str,
     pub texture_man: &'static str,
     pub texture_grad_shadow: &'static str,
+    pub texture_stockpile: &'static str,
 }
 
 pub const PATHS: AssetPaths = AssetPaths {
@@ -16,4 +17,5 @@ pub const PATHS: AssetPaths = AssetPaths {
     texture_house: "textures/house.png",
     texture_man: "textures/man.png",
     texture_grad_shadow: "textures/grad-shadow.png",
+    texture_stockpile: "textures/stockpile.png",
 };
