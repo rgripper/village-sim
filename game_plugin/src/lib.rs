@@ -15,6 +15,7 @@ mod residence;
 mod sprite_helpers;
 mod village;
 mod world_gen;
+mod time_cycle;
 
 use crate::actions::ActionsPlugin;
 use crate::audio::InternalAudioPlugin;
@@ -27,6 +28,7 @@ use bevy::app::AppBuilder;
 use bevy::prelude::*;
 use plants::PlantLifePlugin;
 use residence::ResidencePlugin;
+use time_cycle::TimeCyclePlugin;
 use village::VillagePlugin;
 use world_gen::WorldGenPlugin;
 
@@ -42,6 +44,7 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_state(GameState::Loading)
+            .add_plugin(TimeCyclePlugin)
             .add_plugin(LoadingPlugin)
             .add_plugin(ActionsPlugin)
             .add_plugin(MenuPlugin)
