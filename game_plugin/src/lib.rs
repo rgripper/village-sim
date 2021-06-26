@@ -13,11 +13,11 @@ mod plants;
 mod random_names;
 mod residence;
 mod sprite_helpers;
+mod time_cycle;
+mod tree_cutting;
 mod tree_cutting;
 mod village;
 mod world_gen;
-mod time_cycle;
-mod tree_cutting;
 
 use crate::actions::ActionsPlugin;
 use crate::audio::InternalAudioPlugin;
@@ -31,7 +31,7 @@ use bevy::prelude::*;
 use plants::PlantLifePlugin;
 use residence::ResidencePlugin;
 use time_cycle::TimeCyclePlugin;
-use tree_cutting::IntentPlugin;
+use tree_cutting::TaskQuePlugin;
 use village::VillagePlugin;
 use world_gen::WorldGenPlugin;
 
@@ -57,7 +57,7 @@ impl Plugin for GamePlugin {
             .add_plugin(PlantLifePlugin)
             .add_plugin(WorldGenPlugin)
             .add_plugin(MovementPlugin)
-            .add_plugin(IntentPlugin)
+            .add_plugin(TaskQuePlugin)
             // .add_plugin(FrameTimeDiagnosticsPlugin::default())
             // .add_plugin(LogDiagnosticsPlugin::default())
             ;

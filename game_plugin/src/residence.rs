@@ -1,10 +1,23 @@
+use std::collections::{vec_deque, VecDeque};
+use std::iter::FromIterator;
+
 use bevy::{
     math::{Vec2, Vec3},
     prelude::{AppBuilder, Commands, Entity, EventWriter, Plugin, Res},
 };
 use rand::{prelude::ThreadRng, Rng};
 
-use crate::{behaviour::{Intent, Walker}, creatures::{ConstructionSkill, Creature, Fatigue}, loading::Materials, physics::{Mobile, PhysicalObject, Speed}, random_names::RANDOM_NAMES, sprite_helpers::spawn_sprite_bundles, village::VillageTask, world_gen::SimParams};
+use crate::{
+    behaviour::{Task, Walker},
+    creatures::{ConstructionSkill, Creature, Fatigue},
+    loading::Materials,
+    physics::{Mobile, PhysicalObject, Speed},
+    random_names::RANDOM_NAMES,
+    sprite_helpers::spawn_sprite_bundles,
+    tree_cutting::TaskQue,
+    village::VillageTask,
+    world_gen::SimParams,
+};
 
 pub struct CreatureJoinedVillageEvent(pub Entity);
 
@@ -62,7 +75,7 @@ pub fn spawn_villager(
         acceleration: 15.0,
         max_speed: 3.0,
     })
-    .insert(Intent::Idle)
+    .insert(TaskQue(VecDeque::from_iter([Task::WanderAimlessly])))
     .id();
 
     // TODO: joined village

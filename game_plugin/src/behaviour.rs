@@ -10,13 +10,13 @@ pub struct Walker {
     pub max_speed: f32,
 }
 
-pub struct CheckIntentEvent(pub Entity);
+pub struct CheckTaskEvent(pub Entity);
 
 pub struct MovementPlugin;
 
 impl Plugin for MovementPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_event::<CheckIntentEvent>()
+        app.add_event::<CheckTaskEvent>()
             .add_system(go_to_target.system())
             .add_system(go_to_position.system());
     }
@@ -54,7 +54,7 @@ pub fn go_to_target(
         &mut Mobile,
     )>,
     mut physical_object_query: Query<&mut PhysicalObject>,
-    mut ev_check_intent: EventWriter<CheckIntentEvent>,
+    mut ev_check_intent: EventWriter<CheckTaskEvent>,
 ) {
     let recheck_position_interval = 3000.0;
     let game_hour = 3600.0 * 0.00001; // TODO: move to a daytime calc
@@ -86,7 +86,7 @@ pub fn go_to_target(
         match result {
             TravelResult::Arrived => {
                 commands.entity(entity).remove::<TravelToTarget>();
-                ev_check_intent.send(CheckIntentEvent(entity));
+                ev_check_intent.send(CheckTaskEvent(entity));
                 println!("Arrived to a target located at {}", destination);
             }
             TravelResult::Traveling => (),
@@ -105,7 +105,7 @@ pub fn go_to_position(
         &mut Mobile,
     )>,
     mut physical_object_query: Query<&mut PhysicalObject>,
-    mut ev_check_intent: EventWriter<CheckIntentEvent>,
+    mut ev_check_intent: EventWriter<CheckTaskEvent>,
 ) {
     let recheck_position_interval = 3000.0;
     let game_hour = 3600.0 * 0.00001; // TODO: move to a daytime calc
@@ -138,7 +138,7 @@ pub fn go_to_position(
         match result {
             TravelResult::Arrived => {
                 commands.entity(entity).remove::<TravelToPosition>();
-                ev_check_intent.send(CheckIntentEvent(entity));
+                ev_check_intent.send(CheckTaskEvent(entity));
                 println!("Arrived to a position {}", destination);
             }
             TravelResult::Traveling => (),
@@ -157,7 +157,7 @@ fn _go_to_position(
     moving: &mut Mobile,
     commands: &mut Commands,
     entity: Entity,
-    ev_check_intent: &mut EventWriter<CheckIntentEvent>,
+    ev_check_intent: &mut EventWriter<CheckTaskEvent>,
     walker: &Walker,
     hours: f32,
     transform: &mut Transform,
@@ -177,7 +177,9 @@ fn _go_to_position(
     }
 }
 
-pub enum Intent {
+pub enum Task {
     CutTree(Entity),
-    Idle,
+    PickUpWood(f32),
+    DropOffResources,
+    WanderAimlessly,
 }
