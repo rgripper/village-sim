@@ -1,4 +1,4 @@
-use crate::behaviour::CreatureActivityChangedEvent;
+use crate::buildings::spawn_stockpile;
 use crate::hexagon::HexagonBuilder;
 use crate::residence::CreatureJoinedVillageEvent;
 use crate::village::LivingSpaceAvailableEvent;
@@ -36,7 +36,6 @@ fn generate_world(
     materials: Res<Materials>,
     mut ev_creature_joined_village: EventWriter<CreatureJoinedVillageEvent>,
     mut ev_living_space_available: EventWriter<LivingSpaceAvailableEvent>,
-    mut ev_creature_activity_changed: EventWriter<CreatureActivityChangedEvent>,
 ) {
     commands.spawn().insert(Ambience { is_forest: true });
 
@@ -81,7 +80,6 @@ fn generate_world(
             resident_pos,
             &sim_params,
             &mut ev_creature_joined_village,
-            &mut ev_creature_activity_changed,
         );
     }
 
@@ -96,6 +94,9 @@ fn generate_world(
             &mut ev_living_space_available,
         );
     }
+
+    let stockpile_pos = gen_in_rect(rng, &village_start_rect);
+    spawn_stockpile(&mut commands, &materials, stockpile_pos, &sim_params);
 
     commands.spawn().insert(Village {
         habitants_count: 0,

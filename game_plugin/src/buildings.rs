@@ -6,6 +6,7 @@ use bevy::{
 use crate::{
     loading::Materials,
     sprite_helpers::spawn_sprite_bundles_,
+    tree_cutting::ResourceStorage,
     village::{Building, LivingSpace, LivingSpaceAvailableEvent},
     world_gen::SimParams,
 };
@@ -13,7 +14,7 @@ use crate::{
 pub fn spawn_house(
     commands: &mut Commands,
     materials: &Res<Materials>,
-    pos: Vec2,
+    position: Vec2,
     sim_params: &Res<SimParams>,
     max_people: u32,
     ev_living_space_available: &mut EventWriter<LivingSpaceAvailableEvent>,
@@ -22,7 +23,7 @@ pub fn spawn_house(
     let residence_id = spawn_sprite_bundles_(
         commands,
         Vec3::ONE,
-        pos,
+        position,
         bounding_box,
         materials.house.clone(),
         materials.shadow.clone(),
@@ -37,4 +38,25 @@ pub fn spawn_house(
     .id();
 
     ev_living_space_available.send(LivingSpaceAvailableEvent { residence_id })
+}
+
+pub fn spawn_stockpile(
+    commands: &mut Commands,
+    materials: &Res<Materials>,
+    position: Vec2,
+    sim_params: &Res<SimParams>,
+) {
+    let bounding_box = Vec3::new(100.0, 40.0, 40.0);
+    let residence_id = spawn_sprite_bundles_(
+        commands,
+        Vec3::ONE,
+        position,
+        bounding_box,
+        materials.stockpile.clone(),
+        materials.shadow.clone(),
+        sim_params.world_rect.size,
+        Vec2::new(0.0, -20.0),
+    )
+    .insert(ResourceStorage { wood: 0.0 })
+    .id();
 }
