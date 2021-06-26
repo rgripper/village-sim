@@ -20,7 +20,6 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .add_plugin(GamePlugin);
-
     #[cfg(target_arch = "wasm32")]
     app.add_plugin(bevy_webgl2::WebGL2Plugin);
 

@@ -33,8 +33,9 @@ use std::{convert::TryInto, ops::Range};
 
 use crate::{
     hexagon::Rectangle,
-    loading::TextureAssets,
-    world_gen::{gen_in_rect, gen_tree, SimParams},
+    loading::Materials,
+    sprite_helpers::spawn_sprite_bundles,
+    world_gen::{gen_in_rect, SimParams},
     GameState,
 };
 use bevy::prelude::*;
@@ -52,32 +53,35 @@ impl Plugin for PlantLifePlugin {
     }
 }
 
-fn grow(
-    time: Res<Time>,
-    mut plant_size_query: Query<(&mut Transform, &mut Sprite, &mut PlantSize)>,
+fn grow(time: Res<Time>, mut plant_size_query: Query<(&mut Transform, &mut PlantSize)>) {
+    for (mut transform, mut plant_size) in plant_size_query.iter_mut() {
+        set_tree_size(&time, &mut transform, &mut plant_size);
+    }
+}
+
+pub fn set_tree_size(
+    time: &Res<Time>,
+    transform: &mut Mut<Transform>,
+    plant_size: &mut Mut<PlantSize>,
 ) {
-    for (mut transform, mut sprite, mut plant_size) in plant_size_query.iter_mut() {
-        if plant_size.current < plant_size.max {
-            plant_size.current = plant_size
-                .max
-                .min(plant_size.current + 0.1 * time.delta_seconds());
-            transform.scale = get_scale_from_tree_size(&plant_size)
-        }
+    if plant_size.current < plant_size.max {
+        plant_size.current = plant_size
+            .max
+            .min(plant_size.current + 0.1 * time.delta_seconds());
+        transform.scale = get_scale_from_tree_size(&plant_size)
     }
 }
 
 fn seed(
     time: Res<Time>,
-    mut seeder_query: Query<(Entity, &Transform, &mut Seeder)>,
+    mut seeder_query: Query<(&Transform, &mut Seeder)>,
     mut commands: Commands,
-    textures: Res<TextureAssets>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    materials: Res<Materials>,
     sim_params: Res<SimParams>,
 ) {
     let rng = &mut rand::thread_rng();
-    let tree_material = materials.add(textures.texture_tree.clone().into()); // TODO: Store materials in resources
 
-    for (entity, transform, mut seeder) in seeder_query.iter_mut() {
+    for (transform, mut seeder) in seeder_query.iter_mut() {
         let trees = seeder.produce(time.delta_seconds());
         for _ in 0..trees {
             let tree_pos = gen_in_rect(
@@ -88,12 +92,13 @@ fn seed(
                 },
             );
 
-            gen_tree(
+            spawn_tree(
                 tree_pos,
-                0.5,
+                0.0,
                 &sim_params.world_rect,
                 &mut commands,
-                tree_material.clone(),
+                &materials.tree,
+                &materials.shadow,
             );
         }
     }
@@ -101,4 +106,37 @@ fn seed(
 
 pub fn get_scale_from_tree_size(plant_size: &PlantSize) -> Vec3 {
     Vec3::new(plant_size.current, plant_size.current, 1.0)
+}
+
+pub fn spawn_tree(
+    pos: Vec2,
+    init_plant_size: f32,
+    world_rect: &Rectangle,
+    commands: &mut Commands,
+    tree_material: &Handle<ColorMaterial>,
+    shadow_material: &Handle<ColorMaterial>,
+) {
+    let plant_size = PlantSize {
+        current: init_plant_size,
+        max: 1.0,
+    };
+
+    let bounding_box = Vec3::new(24.0, 48.0, 24.0);
+
+    spawn_sprite_bundles(
+        commands,
+        get_scale_from_tree_size(&plant_size),
+        pos,
+        bounding_box,
+        tree_material.clone(),
+        shadow_material.clone(),
+        world_rect.size,
+    )
+    .insert(Tree)
+    .insert(Seeder {
+        seed_growth_per_second: (0.0..1.0),
+        seeds_since_last_time: 0.0,
+        survival_probability: 0.01,
+    })
+    .insert(plant_size);
 }

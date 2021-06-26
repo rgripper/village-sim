@@ -928,6 +928,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "const_fn"
+version = "0.4.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f92cfa0fd5690b3cf8c1ef2cabbd9b7ef22fa53cf5e1f92b05103f6d5d1cf6e7"
+
+[[package]]
 name = "copyless"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1334,6 +1340,8 @@ dependencies = [
  "bevy",
  "bevy_kira_audio",
  "rand",
+ "rand_distr",
+ "time",
 ]
 
 [[package]]
@@ -1825,9 +1833,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.90"
+version = "0.2.97"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba4aede83fc3617411dc6993bc8c70919750c1c257c6ca6a502aed6e0e2394ae"
+checksum = "12b8adadd720df158f4d70dfe7ccc6adb0472d7c55ca83445f6a5ab3e36f8fb6"
 
 [[package]]
 name = "libloading"
@@ -1854,6 +1862,12 @@ name = "libm"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7fc7aa29613bd6a620df431842069224d8bc9011086b1db4c0e0cd47fa03ec9a"
+
+[[package]]
+name = "libm"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c7d73b3f436185384286bd8098d17ec07c9a7d2388a6599f824d8502b529702a"
 
 [[package]]
 name = "lock_api"
@@ -2140,6 +2154,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9a64b1ec5cda2586e284722486d802acf1f7dbdc623e2bfc57e65ca1cd099290"
 dependencies = [
  "autocfg",
+ "libm 0.2.1",
 ]
 
 [[package]]
@@ -2398,6 +2413,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "rand_distr"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "051b398806e42b9cd04ad9ec8f81e355d0a382c543ac6672c62f5a5b452ef142"
+dependencies = [
+ "num-traits",
+ "rand",
+]
+
+[[package]]
 name = "rand_hc"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2635,6 +2660,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "standback"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e0ec3b06373532b9ee2d1538ffa2eed69ad983b9cd8a42d4d76fc8555512259"
+dependencies = [
+ "version_check",
+]
+
+[[package]]
 name = "stdweb"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2656,7 +2690,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7b0dc6d20ce137f302edf90f9cd3d278866fd7fb139efca6f246161222ad6d87"
 dependencies = [
  "lazy_static",
- "libm",
+ "libm 0.1.4",
 ]
 
 [[package]]
@@ -2716,6 +2750,17 @@ name = "thunderdome"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7572415bd688d401c52f6e36f4c8e805b9ae1622619303b9fa835d531db0acae"
+
+[[package]]
+name = "time"
+version = "0.3.0-alpha-2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f906d7af3f9c93ef57452c3c7d577f0dcfa1700516dcd15c7ba75ede4f0ed08"
+dependencies = [
+ "const_fn",
+ "libc",
+ "standback",
+]
 
 [[package]]
 name = "tinyvec"
