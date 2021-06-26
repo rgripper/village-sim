@@ -15,7 +15,6 @@ mod residence;
 mod sprite_helpers;
 mod time_cycle;
 mod tree_cutting;
-mod tree_cutting;
 mod village;
 mod world_gen;
 
