@@ -3,13 +3,7 @@ use bevy::{
     prelude::*,
 };
 
-use crate::{
-    loading::Materials,
-    sprite_helpers::spawn_sprite_bundles_,
-    tree_cutting::ResourceStorage,
-    village::{Building, LivingSpace, LivingSpaceAvailableEvent},
-    world_gen::SimParams,
-};
+use crate::{loading::Materials, physics::PhysicalObject, sprite_helpers::spawn_sprite_bundles_, tree_cutting::ResourceStorage, village::{Building, LivingSpace, LivingSpaceAvailableEvent}, world_gen::SimParams};
 
 pub fn spawn_house(
     commands: &mut Commands,
@@ -57,6 +51,7 @@ pub fn spawn_stockpile(
         sim_params.world_rect.size,
         Vec2::new(0.0, -20.0),
     )
+    .insert(PhysicalObject { position })
     .insert(ResourceStorage { wood: 0.0 })
     .id();
 }

@@ -34,6 +34,7 @@ use std::{convert::TryInto, ops::Range};
 use crate::{
     hexagon::Rectangle,
     loading::Materials,
+    physics::PhysicalObject,
     sprite_helpers::spawn_sprite_bundles,
     world_gen::{gen_in_rect, SimParams},
     GameState,
@@ -116,7 +117,7 @@ pub fn get_scale_from_tree_size(plant_size: &PlantSize) -> Vec3 {
 }
 
 pub fn spawn_tree(
-    pos: Vec2,
+    position: Vec2,
     init_plant_size: f32,
     world_rect: &Rectangle,
     commands: &mut Commands,
@@ -133,12 +134,13 @@ pub fn spawn_tree(
     spawn_sprite_bundles(
         commands,
         get_scale_from_tree_size(&plant_size),
-        pos,
+        position,
         bounding_box,
         tree_material.clone(),
         shadow_material.clone(),
         world_rect.size,
     )
+    .insert(PhysicalObject { position })
     .insert(Tree)
     .insert(WoodResource(0.0))
     .insert(Seeder {

@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use bevy::prelude::*;
+use bevy::{app::Events, prelude::*};
 
 use crate::{
     actions::Actions,
@@ -31,13 +31,13 @@ impl Plugin for TaskQuePlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_system_set(
             SystemSet::on_update(GameState::Playing)
-                .with_system(check_intent.system())
+                .with_system(check_tasks.system())
                 .with_system(assign_intent.system()),
         );
     }
 }
 
-pub fn check_intent(
+pub fn check_tasks(
     mut commands: Commands,
     sim_params: Res<SimParams>,
     physical_object_query: Query<&PhysicalObject>,
@@ -45,22 +45,25 @@ pub fn check_intent(
     mut resource_carrier_query: Query<&mut ResourceCarrier>,
     mut resource_storage_query: Query<(&mut ResourceStorage, Entity)>,
     mut tasks_queries: QuerySet<(Query<&mut TaskQue>, Query<Entity, Changed<TaskQue>>)>,
-    mut ev_intent_event: EventReader<CheckTaskEvent>,
+    mut task_events: ResMut<Events<CheckTaskEvent>>,
 ) {
     let creature_ids: Vec<Entity> = tasks_queries
         .q1()
         .iter()
         .chain(
-            ev_intent_event
-                .iter()
-                .map(|CheckTaskEvent(creature_id)| *creature_id),
+            task_events
+                .drain()
+                .map(|CheckTaskEvent(creature_id)| creature_id),
         )
         .collect();
+    println!("Something was updated for {}", creature_ids.len());
 
     for creature_id in creature_ids {
-        if let Ok(mut wrapper) = tasks_queries.q0_mut().get_mut(creature_id) {
-            let tasks = &mut wrapper.0;
+        if let Ok(mut task_que_component) = tasks_queries.q0_mut().get_mut(creature_id) {
+            let tasks = &mut task_que_component.0;
             if let Some(task) = tasks.front() {
+                println!("Checking task {:?} of {:?}", tasks, creature_id);
+
                 if try_accomplish_task(
                     &mut commands,
                     &sim_params.world_rect,
@@ -72,6 +75,9 @@ pub fn check_intent(
                     &task,
                 ) {
                     tasks.pop_front();
+                    println!("Task que is now {:?} for creature {:?}", tasks, creature_id);
+
+                    task_events.send(CheckTaskEvent(creature_id));
                 }
             }
         }
@@ -129,6 +135,7 @@ pub fn try_accomplish_task(
     worker_id: &Entity,
     task: &Task,
 ) -> bool {
+    println!("try_accomplish_task {:?}", task);
     match task {
         Task::CutTree(tree_id) => {
             if physical_object_query.get(*tree_id).is_err() {
@@ -136,11 +143,20 @@ pub fn try_accomplish_task(
             }
 
             if is_located_near(physical_object_query, worker_id, tree_id, 4.0) {
-                commands
-                    .entity(*worker_id)
-                    .insert(CuttingTree { tree_id: *tree_id });
-                return false;
+                println!("At the tree. Ready to cut");
+
+                // TODO:
+                // commands
+                //     .entity(*worker_id)
+                //     .insert(CuttingTree { tree_id: *tree_id });
+                // then add TreeCut(f32) on the tree, that reaches 1.0, meaning the tree should fall/be despawned. And a resource shoudl appear (a pile of wood)
+
+                // dummy cutting logic for now
+                commands.entity(*tree_id).despawn_recursive();
+                return true;
             } else {
+                println!("Travel to the tree");
+
                 commands.entity(*worker_id).insert(TravelToTarget {
                     time_to_next_location_check: 0.0,
                     last_target_position: None,
@@ -150,12 +166,8 @@ pub fn try_accomplish_task(
             }
         }
         Task::PickUpWood(amount) => {
-            // TODO
-            // if can_carry_more_wood(worker_id, resource_carrier_query) {
-            // } else {
-            //     commands.entity(*worker_id).remove::<Task>();
-            //     commands.entity(*worker_id).insert(Task::DropOffResources);
-            // }
+            // this is just a dummy, proper logic could be added later
+            pick_up_wood(worker_id, resource_carrier_query, *amount);
             return true;
         }
         Task::DropOffResources => {
@@ -190,17 +202,18 @@ fn store_wood(
     resource_carrier_query: &mut Query<&mut ResourceCarrier>,
 ) {
     let mut carrier = resource_carrier_query.get_mut(*worker_id).unwrap();
-
     (*storage).wood += (*carrier).wood; // TODO: check if storage is full
     (*carrier).wood = 0.0;
 }
 
-fn can_carry_more_wood(
+fn pick_up_wood(
     worker_id: &Entity,
     resource_carrier_query: &mut Query<&mut ResourceCarrier>,
-) -> bool {
-    let carrier = resource_carrier_query.get_mut(*worker_id).unwrap();
-    carrier.wood <= carrier.max_wood
+    amount: f32,
+) {
+    let mut carrier = resource_carrier_query.get_mut(*worker_id).unwrap();
+    let amount_can_carry = carrier.max_wood - carrier.wood;
+    carrier.wood += amount.min(amount_can_carry);
 }
 
 fn is_located_near(

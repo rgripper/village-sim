@@ -7,6 +7,7 @@ use bevy::{
 };
 use rand::{prelude::ThreadRng, Rng};
 
+use crate::tree_cutting::ResourceCarrier;
 use crate::{
     behaviour::{Task, Walker},
     creatures::{ConstructionSkill, Creature, Fatigue},
@@ -51,7 +52,7 @@ pub fn spawn_villager(
     position: Vec2,
     sim_params: &Res<SimParams>,
     ev_creature_joined_village: &mut EventWriter<CreatureJoinedVillageEvent>,
-) {
+) -> Entity {
     let bounding_box = Vec3::new(16.0, 16.0, 16.0);
     let name = RANDOM_NAMES[rand::thread_rng().gen_range(0..RANDOM_NAMES.len() - 1)];
     let creature_id = spawn_sprite_bundles(
@@ -71,12 +72,17 @@ pub fn spawn_villager(
     .insert(ConstructionSkill(0.75)) // just a sample value, 75% of the standard speed
     .insert(PhysicalObject { position })
     .insert(Mobile(Speed(0.0)))
+    .insert(ResourceCarrier {
+        max_wood: 10.0,
+        wood: 0.0,
+    })
     .insert(Walker {
         acceleration: 15.0,
         max_speed: 3.0,
     })
-    .insert(TaskQue(VecDeque::from_iter([Task::WanderAimlessly])))
+    .insert(TaskQue(VecDeque::new()))
+    //.insert(TaskQue(VecDeque::from_iter([Task::WanderAimlessly])))
     .id();
-
+    creature_id
     // TODO: joined village
 }
