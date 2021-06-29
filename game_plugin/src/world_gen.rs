@@ -170,18 +170,23 @@ fn cut_tree(
     mut ev_creature_available_for_tasks: EventReader<CreatureAvailableForTasks>,
     mut ev_check_task_event: EventWriter<CheckTaskEvent>,
 ) {
-    if let Some(CreatureAvailableForTasks(villager_id)) =
-        ev_creature_available_for_tasks.iter().next()
-    {
+    let mut villager_iter = ev_creature_available_for_tasks.iter();
+    if let Some(CreatureAvailableForTasks(villager_id)) = villager_iter.next() {
         println!("cut_tree has creatures available for tasks");
 
         if let Some(tree_id) = tree_query.iter().next() {
             let task_que = &mut villager_tasks_query.get_mut(*villager_id).unwrap().0;
             println!("ready to put a task in a task queue");
 
+            task_que.clear();
             task_que.push_back(Task::CutTree(tree_id));
             task_que.push_back(Task::PickUpWood(5.0));
             task_que.push_back(Task::DropOffResources);
         }
+
+        // for villager_id in villager_iter {
+        //     let task_que = &mut villager_tasks_query.get_mut(*villager_id).unwrap().0;
+        //     task_que.push_back(Task::WanderAimlessly);
+        // }
     }
 }

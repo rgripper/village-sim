@@ -27,6 +27,14 @@ pub fn spawn_sprite_bundles<'a, 'b>(
     )
 }
 
+pub fn get_translation(world_size: Vec2, position: Vec2) -> Vec3 {
+    Vec3::new(
+        position.x,
+        position.y,
+        OBJECT_LAYER + world_size.y - position.y,
+    )
+}
+
 pub fn spawn_sprite_bundles_<'a, 'b>(
     commands: &'b mut Commands<'a>,
     scale: Vec3,
@@ -39,11 +47,7 @@ pub fn spawn_sprite_bundles_<'a, 'b>(
 ) -> EntityCommands<'a, 'b> {
     let mut entity_commands = commands.spawn_bundle(SpriteBundle {
         transform: Transform {
-            translation: Vec3::new(
-                position.x,
-                position.y,
-                OBJECT_LAYER + world_size.y - position.y,
-            ),
+            translation: get_translation(world_size, position),
             scale,
             ..Default::default()
         },
