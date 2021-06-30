@@ -1,6 +1,12 @@
+use std::collections::VecDeque;
+use std::iter::FromIterator;
+
+use crate::behaviour::{CheckTaskEvent, Task};
 use crate::buildings::spawn_stockpile;
 use crate::hexagon::HexagonBuilder;
+use crate::plants::Tree;
 use crate::residence::CreatureJoinedVillageEvent;
+use crate::tree_cutting::TaskQue;
 use crate::village::LivingSpaceAvailableEvent;
 use crate::village::Village;
 use crate::{
@@ -11,14 +17,13 @@ use crate::{hexagon::Rectangle, land_grid::LandTile, GameState};
 use bevy::prelude::*;
 use rand::{prelude::ThreadRng, Rng};
 
-pub struct WorldGenPlugin;
-
 pub struct SimParams {
     pub start_pos: Vec2,
     pub hexagon_builder: HexagonBuilder,
     pub world_rect: Rectangle,
 }
 
+pub struct WorldGenPlugin;
 impl Plugin for WorldGenPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_system_set(
@@ -36,6 +41,7 @@ fn generate_world(
     materials: Res<Materials>,
     mut ev_creature_joined_village: EventWriter<CreatureJoinedVillageEvent>,
     mut ev_living_space_available: EventWriter<LivingSpaceAvailableEvent>,
+    mut ev_creature_available_for_tasks: EventWriter<CreatureAvailableForTasks>,
 ) {
     commands.spawn().insert(Ambience { is_forest: true });
 
@@ -72,15 +78,18 @@ fn generate_world(
         position: sim_params.start_pos,
         size: Vec2::new(100., 100.),
     };
+
     for _ in 0..8 {
         let resident_pos = gen_in_rect(rng, &village_start_rect);
-        spawn_villager(
+        let new_villager_id = spawn_villager(
             &mut commands,
             &materials,
             resident_pos,
             &sim_params,
             &mut ev_creature_joined_village,
         );
+
+        ev_creature_available_for_tasks.send(CreatureAvailableForTasks(new_villager_id))
     }
 
     for _ in 0..2 {
@@ -139,4 +148,45 @@ fn create_land_grid(
                 })
                 .insert(tile);
         })
+}
+
+pub struct ExperimentalPlugin;
+impl Plugin for ExperimentalPlugin {
+    fn build(&self, app: &mut AppBuilder) {
+        app.add_system_set(SystemSet::on_update(GameState::Playing).with_system(cut_tree.system()))
+            .add_event::<CreatureAvailableForTasks>();
+
+        // .add_system_set(
+        //     SystemSet::on_exit(GameState::Playing).with_system(remove_world.system()),
+        // );
+    }
+}
+
+pub struct CreatureAvailableForTasks(pub Entity);
+
+fn cut_tree(
+    mut villager_tasks_query: Query<&mut TaskQue>,
+    tree_query: Query<Entity, With<Tree>>,
+    mut ev_creature_available_for_tasks: EventReader<CreatureAvailableForTasks>,
+    mut ev_check_task_event: EventWriter<CheckTaskEvent>,
+) {
+    let mut villager_iter = ev_creature_available_for_tasks.iter();
+    if let Some(CreatureAvailableForTasks(villager_id)) = villager_iter.next() {
+        println!("cut_tree has creatures available for tasks");
+
+        if let Some(tree_id) = tree_query.iter().next() {
+            let task_que = &mut villager_tasks_query.get_mut(*villager_id).unwrap().0;
+            println!("ready to put a task in a task queue");
+
+            task_que.clear();
+            task_que.push_back(Task::CutTree(tree_id));
+            task_que.push_back(Task::PickUpWood(5.0));
+            task_que.push_back(Task::DropOffResources);
+        }
+
+        // for villager_id in villager_iter {
+        //     let task_que = &mut villager_tasks_query.get_mut(*villager_id).unwrap().0;
+        //     task_que.push_back(Task::WanderAimlessly);
+        // }
+    }
 }

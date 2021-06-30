@@ -1,0 +1,1 @@
+- Refactor PhysicalObject (maybe add Volume instead of just a position - so e.g. `Stockpile` would have a volume and could be approached by picking any `Position` along its borders)

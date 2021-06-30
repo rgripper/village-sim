@@ -32,7 +32,7 @@ use residence::ResidencePlugin;
 use time_cycle::TimeCyclePlugin;
 use tree_cutting::TaskQuePlugin;
 use village::VillagePlugin;
-use world_gen::WorldGenPlugin;
+use world_gen::{ExperimentalPlugin, WorldGenPlugin};
 
 #[derive(Clone, Eq, PartialEq, Debug, Hash)]
 enum GameState {
@@ -57,6 +57,7 @@ impl Plugin for GamePlugin {
             .add_plugin(WorldGenPlugin)
             .add_plugin(MovementPlugin)
             .add_plugin(TaskQuePlugin)
+            .add_plugin(ExperimentalPlugin)
             // .add_plugin(FrameTimeDiagnosticsPlugin::default())
             // .add_plugin(LogDiagnosticsPlugin::default())
             ;

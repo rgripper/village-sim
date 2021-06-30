@@ -177,6 +177,7 @@ fn _go_to_position(
     }
 }
 
+#[derive(Debug, Clone)]
 pub enum Task {
     CutTree(Entity),
     PickUpWood(f32),
