@@ -60,21 +60,19 @@ This week:
 
 
 
-1. (In progress, Vladimir) A villager can cut trees: Villager does the following:
-    1. Pick a tree to cut
-    2. Move to a tree
+1. ~~(In progress, Vladimir) A villager can cut trees: Villager does the following:~~
+    1. ~~Pick a tree to cut~~
+    2. ~~Move to a tree~~
     3. Provide some cutting status animation (eg, a shader for the tree to overlay it with yellow color with 0.3 alpha channel)
     4. Pick wood (we should draw a “wooden log” texture on the ground)
-    5. Carry wood to the nearest Storage (use starting_point for now as a Storage) (also, draw the “wooden log” texture over the character’s torso)
-    6. Drop wood in the Storage (pain “wooden log” on the ground)
+    5. ~~Carry wood to the nearest Storage (use starting_point for now as a Storage) (also, draw the “wooden log” texture over the character’s torso)~~
+    6. ~~Drop wood in the Stockpile~~
 2. Day/night cycle
-    7. Track 24h day cycle (something like SimTime Resource)
-    8. Calculate light level (as a Resource). (find some library or calc, e.g. pick any coordinates on the planet)
-    9. Display time at the top center of the game window
+    1. ~~Track 24h day cycle (something like SimTime Resource)~~
+    2. Calculate light level (as a Resource). (find some library or calc, e.g. pick any coordinates on the planet)
+    3. ~~Display time at the top center of the game window~~
 
 Backlog
-
-
 
 1. Sleeping
     1. After 19:00 every second {(5..10)/600} gets added to {fatigue}. 
