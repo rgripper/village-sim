@@ -2,7 +2,7 @@ mod paths;
 
 use crate::loading::paths::PATHS;
 use crate::GameState;
-use bevy::asset::LoadState;
+use bevy::asset::{Asset, HandleId, LoadState};
 use bevy::prelude::*;
 use bevy_kira_audio::AudioSource;
 
@@ -20,9 +20,7 @@ impl Plugin for LoadingPlugin {
 }
 
 pub struct LoadingState {
-    textures: Vec<HandleUntyped>,
-    fonts: Vec<HandleUntyped>,
-    audio: Vec<HandleUntyped>,
+    items: Vec<HandleUntyped>,
 }
 
 pub struct FontAssets {
@@ -43,83 +41,78 @@ pub struct Materials {
     pub house: Handle<ColorMaterial>,
 }
 
-fn start_loading(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let mut fonts: Vec<HandleUntyped> = vec![];
-    fonts.push(asset_server.load_untyped(PATHS.fira_sans));
-
-    let mut audio: Vec<HandleUntyped> = vec![];
-    audio.push(asset_server.load_untyped(PATHS.audio_birds));
-
-    let mut textures: Vec<HandleUntyped> = vec![];
-    textures.push(asset_server.load_untyped(PATHS.texture_tree));
-    textures.push(asset_server.load_untyped(PATHS.texture_wood_logs));
-    textures.push(asset_server.load_untyped(PATHS.texture_house));
-    textures.push(asset_server.load_untyped(PATHS.texture_man));
-    textures.push(asset_server.load_untyped(PATHS.texture_grad_shadow));
-    textures.push(asset_server.load_untyped(PATHS.texture_stockpile));
-
-    commands.insert_resource(LoadingState {
-        textures,
-        fonts,
-        audio,
-    });
-}
-
-fn check_state(
+fn start_loading(
     mut commands: Commands,
-    mut state: ResMut<State<GameState>>,
     asset_server: Res<AssetServer>,
-    loading_state: Res<LoadingState>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    if LoadState::Loaded
-        != asset_server.get_group_load_state(loading_state.fonts.iter().map(|handle| handle.id))
-    {
-        return;
-    }
-    if LoadState::Loaded
-        != asset_server.get_group_load_state(loading_state.textures.iter().map(|handle| handle.id))
-    {
-        return;
-    }
-    if LoadState::Loaded
-        != asset_server.get_group_load_state(loading_state.audio.iter().map(|handle| handle.id))
-    {
-        return;
+    let mut items: Vec<HandleUntyped> = vec![];
+
+    fn track_asset<T: Asset>(
+        asset_server: &Res<AssetServer>,
+        items: &mut Vec<HandleUntyped>,
+        asset_path: &str,
+    ) -> Handle<T> {
+        let handle = asset_server.load::<T, &str>(asset_path);
+        items.push(handle.clone_untyped());
+        handle
     }
 
     commands.insert_resource(FontAssets {
-        fira_sans: asset_server.get_handle(PATHS.fira_sans),
+        fira_sans: track_asset(&asset_server, &mut items, PATHS.fira_sans),
     });
 
     commands.insert_resource(AudioAssets {
-        birds: asset_server.get_handle(PATHS.audio_birds),
+        birds: track_asset(&asset_server, &mut items, PATHS.audio_birds),
     });
 
     commands.insert_resource(Materials {
         tile: materials.add(Color::rgb(0.5, 0.78, 0.52).into()),
-        man: materials.add(asset_server.get_handle(PATHS.texture_man).clone().into()),
-        house: materials.add(asset_server.get_handle(PATHS.texture_house).clone().into()),
-        tree: materials.add(asset_server.get_handle(PATHS.texture_tree).clone().into()),
+        man: materials.add(
+            track_asset(&asset_server, &mut items, PATHS.texture_man)
+                .clone()
+                .into(),
+        ),
+        house: materials.add(
+            track_asset(&asset_server, &mut items, PATHS.texture_house)
+                .clone()
+                .into(),
+        ),
+        tree: materials.add(
+            track_asset(&asset_server, &mut items, PATHS.texture_tree)
+                .clone()
+                .into(),
+        ),
         wood_logs: materials.add(
-            asset_server
-                .get_handle(PATHS.texture_wood_logs)
+            track_asset(&asset_server, &mut items, PATHS.texture_wood_logs)
                 .clone()
                 .into(),
         ),
         shadow: materials.add(
-            asset_server
-                .get_handle(PATHS.texture_grad_shadow)
+            track_asset(&asset_server, &mut items, PATHS.texture_grad_shadow)
                 .clone()
                 .into(),
         ),
         stockpile: materials.add(
-            asset_server
-                .get_handle(PATHS.texture_stockpile)
+            track_asset(&asset_server, &mut items, PATHS.texture_stockpile)
                 .clone()
                 .into(),
         ),
     });
+
+    commands.insert_resource(LoadingState { items });
+}
+
+fn check_state(
+    mut state: ResMut<State<GameState>>,
+    asset_server: Res<AssetServer>,
+    loading_state: Res<LoadingState>,
+) {
+    if LoadState::Loaded
+        != asset_server.get_group_load_state(loading_state.items.iter().map(|x| x.id))
+    {
+        return;
+    }
 
     state.set(GameState::Menu).unwrap();
 }
